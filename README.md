@@ -1,2 +1,3 @@
 # projectsWeb
-This repository contains projects built with Canvas, DOM and Babylon.js.
+  Collaborators:  -Abdelouarite GHILANE EL HASSANI
+                  -Elhadj Oumar DIALLO
