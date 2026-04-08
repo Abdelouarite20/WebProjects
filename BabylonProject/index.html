@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Combat Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="hud">
+        <div class="hud-title">Air Combat</div>
+        <div>Health: <span id="healthValue">100</span></div>
+        <div>Money: <span id="moneyValue">0</span></div>
+        <div>Score: <span id="scoreValue">0</span></div>
+        <div>Time: <span id="timeValue">0</span>s</div>
+        <div>Level: <span id="levelValue">1</span></div>
+    </div>
+
+    <div id="shop">
+        <div class="shop-title">Powers</div>
+        <button id="shieldButton">Shield (40)</button>
+        <button id="speedButton">Speed (30)</button>
+        <button id="bombButton">Bomb (50)</button>
+        <button id="alliesButton">Allies (60)</button>
+    </div>
+
+    <div id="help">
+        Turn: A/D | Pitch: W/S | Throttle: Q/E | Aim: mouse | Shoot: left click
+    </div>
+
+    <div id="speedometer" data-zone="low">
+        <div class="speedometer-bezel"></div>
+
+        <div class="speedometer-face">
+            <div class="speedometer-glass"></div>
+            <div class="speedometer-ticks" id="speedometerTicks"></div>
+
+            <div class="speedometer-needle-wrap" id="speedNeedleWrap">
+                <div class="speedometer-needle-tail"></div>
+                <div class="speedometer-needle"></div>
+                <div class="speedometer-needle-cap"></div>
+            </div>
+
+            <div class="speedometer-readout">
+                <div class="speedometer-label">airspeed</div>
+                <div class="speedometer-value"><span id="speedValue">0</span></div>
+                <div class="speedometer-unit">SPD</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="crosshair">
+        <div class="crosshair-line horizontal"></div>
+        <div class="crosshair-line vertical"></div>
+    </div>
+
+    <div id="gameOverPanel" class="hidden">
+        <div class="panel-box">
+            <h1>Game Over</h1>
+            <p>Your plane was destroyed.</p>
+            <button id="restartButton">Restart</button>
+        </div>
+    </div>
+
+    <canvas id="renderCanvas"></canvas>
+
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="js/app.js?v=5"></script>
+    <script src="js/input.js?v=1"></script>
+    <script src="js/sky.js?v=1"></script>
+    <script src="js/planes.js?v=1"></script>
+    <script src="js/scene.js?v=3"></script>
+    <script src="js/battlefield.js?v=2"></script>
+    <script src="js/projectiles.js?v=1"></script>
+    <script src="js/allies.js?v=1"></script>
+    <script src="js/effects.js?v=1"></script>
+    <script src="js/progression.js?v=1"></script>
+    <script src="js/player.js?v=4"></script>
+    <script src="js/enemies.js?v=4"></script>
+    <script src="js/ui.js?v=4"></script>
+    <script src="js/main.js?v=5"></script>
+</body>
+</html>

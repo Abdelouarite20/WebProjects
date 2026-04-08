@@ -1,0 +1,354 @@
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #6ea3d8;
+}
+
+#renderCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+}
+
+#hud {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 10;
+    color: #f6f8fb;
+    background: linear-gradient(180deg, rgba(10, 23, 38, 0.82), rgba(8, 14, 24, 0.64));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.24);
+    padding: 14px 16px;
+    border-radius: 12px;
+    line-height: 1.7;
+    min-width: 170px;
+    backdrop-filter: blur(6px);
+}
+
+.hud-title,
+.shop-title {
+    color: #ffffff;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+#shop {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: linear-gradient(180deg, rgba(10, 23, 38, 0.82), rgba(8, 14, 24, 0.64));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.24);
+    padding: 14px;
+    border-radius: 12px;
+    backdrop-filter: blur(6px);
+}
+
+#shop button,
+#gameOverPanel button {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    background: linear-gradient(180deg, #50657d, #334253);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+#shop button:hover,
+#gameOverPanel button:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(180deg, #657a91, #3c4e61);
+}
+
+#help {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    color: #f4f7fb;
+    background: rgba(8, 15, 26, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 10px 14px;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+#speedometer {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    width: 230px;
+    height: 230px;
+    z-index: 12;
+    pointer-events: none;
+    filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.38));
+}
+
+.speedometer-bezel {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.18), transparent 24%),
+        radial-gradient(circle at 50% 50%, #56606c 0%, #2c323a 42%, #171b21 68%, #090b0e 100%);
+    box-shadow:
+        inset 0 0 0 2px rgba(255, 255, 255, 0.14),
+        inset 0 0 0 8px rgba(0, 0, 0, 0.38),
+        inset 0 16px 22px rgba(255, 255, 255, 0.05);
+}
+
+.speedometer-face {
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 50% 38%, #313c4c 0%, #18202a 52%, #0c1218 78%, #080b0f 100%);
+    box-shadow:
+        inset 0 0 0 2px rgba(255, 255, 255, 0.07),
+        inset 0 -10px 18px rgba(0, 0, 0, 0.45);
+}
+
+.speedometer-face::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(210, 222, 235, 0.12);
+}
+
+.speedometer-face::after {
+    content: "";
+    position: absolute;
+    inset: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(210, 222, 235, 0.08);
+}
+
+.speedometer-glass {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02) 28%, transparent 45%),
+        radial-gradient(circle at 32% 18%, rgba(255, 255, 255, 0.10), transparent 20%);
+    pointer-events: none;
+}
+
+.speedometer-ticks {
+    position: absolute;
+    inset: 0;
+}
+
+.speedometer-tick {
+    position: absolute;
+    border-radius: 999px;
+    background: #e8edf4;
+    transform-origin: center center;
+}
+
+.speedometer-tick.major {
+    width: 4px;
+    height: 18px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
+}
+
+.speedometer-tick.minor {
+    width: 2px;
+    height: 9px;
+    opacity: 0.58;
+}
+
+.speedometer-mark {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    color: #dce6f2;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.speedometer-needle-wrap {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    transform: translate(-50%, -50%) rotate(-130deg);
+    transform-origin: 50% 50%;
+    transition: transform 120ms linear;
+}
+
+.speedometer-needle {
+    position: absolute;
+    left: -4px;
+    top: -88px;
+    width: 8px;
+    height: 94px;
+    background: linear-gradient(180deg, #f8fbff 0%, #f5b8a8 45%, #d54831 100%);
+    clip-path: polygon(50% 0%, 100% 18%, 70% 100%, 30% 100%, 0% 18%);
+    box-shadow:
+        0 0 10px rgba(255, 110, 80, 0.35),
+        0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+.speedometer-needle-tail {
+    position: absolute;
+    left: -2px;
+    top: 8px;
+    width: 4px;
+    height: 34px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.05));
+    opacity: 0.65;
+}
+
+.speedometer-needle-cap {
+    position: absolute;
+    left: -14px;
+    top: -14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 35% 30%, #79828d 0%, #424953 38%, #171c21 75%, #090b0f 100%);
+    box-shadow:
+        inset 0 0 0 2px rgba(255, 255, 255, 0.10),
+        0 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.speedometer-readout {
+    position: absolute;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    width: 100px;
+    padding: 10px 10px 12px;
+    border-radius: 12px;
+    text-align: center;
+    color: #f6fbff;
+    background: linear-gradient(180deg, rgba(36, 42, 50, 0.96), rgba(14, 18, 24, 0.96));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 10px 20px rgba(0, 0, 0, 0.28);
+}
+
+.speedometer-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+.speedometer-value {
+    margin-top: 4px;
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+}
+
+.speedometer-unit {
+    margin-top: 2px;
+    font-size: 11px;
+    letter-spacing: 0.10em;
+    opacity: 0.72;
+}
+
+#speedometer[data-zone="low"] .speedometer-readout {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 0 0 1px rgba(99, 182, 255, 0.18),
+        0 10px 20px rgba(0, 0, 0, 0.28);
+}
+
+#speedometer[data-zone="cruise"] .speedometer-readout {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 0 0 1px rgba(90, 223, 154, 0.18),
+        0 10px 20px rgba(0, 0, 0, 0.28);
+}
+
+#speedometer[data-zone="warning"] .speedometer-readout {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 0 0 1px rgba(255, 184, 77, 0.22),
+        0 10px 20px rgba(0, 0, 0, 0.28);
+}
+
+#speedometer[data-zone="danger"] .speedometer-readout {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 0 0 1px rgba(255, 92, 92, 0.25),
+        0 10px 20px rgba(0, 0, 0, 0.28);
+}
+
+#crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 28px;
+    height: 28px;
+    transform: translate(-50%, -50%);
+    z-index: 9;
+    pointer-events: none;
+}
+
+.crosshair-line {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+}
+
+.horizontal {
+    top: 13px;
+    left: 4px;
+    width: 20px;
+    height: 2px;
+}
+
+.vertical {
+    top: 4px;
+    left: 13px;
+    width: 2px;
+    height: 20px;
+}
+
+#gameOverPanel {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(4, 10, 18, 0.6);
+}
+
+.panel-box {
+    background: linear-gradient(180deg, #edf2f7, #dfe7ef);
+    color: #1c2733;
+    padding: 28px 32px;
+    border-radius: 16px;
+    text-align: center;
+    min-width: 280px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+}
+
+.hidden {
+    display: none !important;
+}
