@@ -269,7 +269,14 @@ App.createMountain = function (radius, angle, layer) {
     mountain.position.set(x, App.getGroundHeight(x, z) + height * 0.46 - 18, z);
     mountain.rotation.y = angle + Math.random() * 0.8;
     mountain.receiveShadows = true;
+    mountain.metadata = mountain.metadata || {};
+    mountain.metadata.crashKind = "mountain";
+    mountain.metadata.crashDestructible = false;
     App.addShadowCaster(mountain);
+
+    if (App.registerCrashCollider) {
+        App.registerCrashCollider(mountain, 1.6);
+    }
 };
 
 App.createMountains = function () {
@@ -300,6 +307,10 @@ App.createTree = function (x, z, scale, styleIndex) {
     root.position.set(x, y, z);
     root.scaling.setAll(scale);
     root.rotation.y = Math.random() * Math.PI * 2;
+    root.metadata = root.metadata || {};
+    root.metadata.crashKind = "tree";
+    root.metadata.crashDestructible = true;
+    root.metadata.crashExplosionOffset = new BABYLON.Vector3(0, 6 * scale, 0);
 
     const trunk = BABYLON.MeshBuilder.CreateCylinder("trunk", {
         height: 7,
@@ -357,6 +368,10 @@ App.createTree = function (x, z, scale, styleIndex) {
         foliage2.material = App.leafMaterials[1];
         App.addShadowCaster(foliage2);
     }
+
+    if (App.registerCrashCollider) {
+        App.registerCrashCollider(root, 0.85);
+    }
 };
 
 App.createForests = function () {
@@ -390,8 +405,17 @@ App.createForests = function () {
 App.createHouse = function (x, z, width, depth, height, roofHeight, wallMat, roofMat) {
     const baseY = App.getGroundHeight(x, z);
 
+    const root = new BABYLON.TransformNode("houseRoot_" + Math.random().toString(36).slice(2), App.scene);
+    root.position.set(x, baseY, z);
+    root.rotation.y = (Math.random() < 0.5 ? 0 : Math.PI * 0.5) + (Math.random() - 0.5) * 0.08;
+    root.metadata = root.metadata || {};
+    root.metadata.crashKind = "house";
+    root.metadata.crashDestructible = true;
+    root.metadata.crashExplosionOffset = new BABYLON.Vector3(0, height * 0.55, 0);
+
     const body = BABYLON.MeshBuilder.CreateBox("houseBody_" + Math.random(), { width, depth, height }, App.scene);
-    body.position.set(x, baseY + height * 0.5, z);
+    body.parent = root;
+    body.position.set(0, height * 0.5, 0);
     body.material = wallMat;
     body.receiveShadows = true;
     App.addShadowCaster(body);
@@ -401,9 +425,10 @@ App.createHouse = function (x, z, width, depth, height, roofHeight, wallMat, roo
         diameter: Math.max(width, 1) * 1.18,
         tessellation: 3
     }, App.scene);
+    roof.parent = root;
     roof.rotation.z = Math.PI / 2;
     roof.rotation.y = Math.PI / 2;
-    roof.position.set(x, body.position.y + height * 0.5 + roofHeight * 0.18, z);
+    roof.position.set(0, height * 0.5 + roofHeight * 0.18, 0);
     roof.scaling.y = roofHeight;
     roof.material = roofMat;
     App.addShadowCaster(roof);
@@ -413,7 +438,8 @@ App.createHouse = function (x, z, width, depth, height, roofHeight, wallMat, roo
         height: height * 0.46,
         depth: 0.16
     }, App.scene);
-    door.position.set(x, baseY + height * 0.23, z + depth * 0.5 + 0.08);
+    door.parent = root;
+    door.position.set(0, height * 0.23, depth * 0.5 + 0.08);
     door.material = App.doorMat;
 
     const leftWindow = BABYLON.MeshBuilder.CreateBox("windowL_" + Math.random(), {
@@ -421,20 +447,29 @@ App.createHouse = function (x, z, width, depth, height, roofHeight, wallMat, roo
         height: height * 0.18,
         depth: 0.08
     }, App.scene);
-    leftWindow.position.set(x - width * 0.22, baseY + height * 0.58, z + depth * 0.5 + 0.05);
+    leftWindow.parent = root;
+    leftWindow.position.set(-width * 0.22, height * 0.58, depth * 0.5 + 0.05);
     leftWindow.material = App.windowMat;
 
     const rightWindow = leftWindow.clone("windowR_" + Math.random());
-    rightWindow.position.x = x + width * 0.22;
+    rightWindow.parent = root;
+    rightWindow.position.x = width * 0.22;
 
     const chimney = BABYLON.MeshBuilder.CreateBox("chimney_" + Math.random(), {
         width: 0.8,
         depth: 0.8,
         height: 3.6
     }, App.scene);
-    chimney.position.set(x + width * 0.16, roof.position.y + 1.7, z);
+    chimney.parent = root;
+    chimney.position.set(width * 0.16, height * 0.5 + roofHeight * 0.18 + 1.7, 0);
     chimney.material = wallMat;
     App.addShadowCaster(chimney);
+
+    if (App.registerCrashCollider) {
+        App.registerCrashCollider(root, 1.15);
+    }
+
+    return root;
 };
 
 App.createRoad = function (from, to, width) {
@@ -462,11 +497,13 @@ App.createVillages = function () {
 
     App.villageCenters.forEach((village, villageIndex) => {
         const center = new BABYLON.Vector3(village.x, App.getGroundHeight(village.x, village.z) + 0.2, village.z);
+
         for (let i = 0; i < 5; i++) {
             const angle = (i / 5) * Math.PI * 2 + Math.random() * 0.25;
             const radius = 12 + Math.random() * 20;
             const x = village.x + Math.cos(angle) * radius;
             const z = village.z + Math.sin(angle) * radius;
+
             App.createHouse(
                 x,
                 z,
@@ -477,6 +514,7 @@ App.createVillages = function () {
                 App.houseWallMats[(villageIndex + i) % App.houseWallMats.length],
                 App.roofMats[(villageIndex + i) % App.roofMats.length]
             );
+
             const housePos = new BABYLON.Vector3(x, App.getGroundHeight(x, z) + 0.15, z);
             App.createRoad(center, housePos, 5 + Math.random() * 2);
         }
@@ -500,5 +538,3 @@ App.createRunway = function () {
         stripe.position.set(0, runway.position.y + 0.03, -225 + i * 75);
     }
 };
-
-

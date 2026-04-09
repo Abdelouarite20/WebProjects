@@ -1,4 +1,4 @@
-App.getProjectileMaterials = function () {
+﻿App.getProjectileMaterials = function () {
     if (App.projectileMaterials) {
         return App.projectileMaterials;
     }
@@ -249,24 +249,26 @@ App.createBullet = function (position, velocity, color, damage, size, type) {
 App.shootPlayerBullet = function (originMesh, aimPoint) {
     const mats = App.getProjectileMaterials();
 
-    let forward = BABYLON.Vector3.TransformNormal(
+    const planeForward = BABYLON.Vector3.TransformNormal(
         new BABYLON.Vector3(0, 0, 1),
         originMesh.getWorldMatrix()
     ).normalize();
 
+    const muzzle = originMesh.position.add(planeForward.scale(6.2));
+    let bulletDirection = planeForward.clone();
+
     if (aimPoint) {
-        const aimedDirection = aimPoint.subtract(originMesh.position);
+        const aimedDirection = aimPoint.subtract(muzzle);
         if (aimedDirection.lengthSquared() > 0.001) {
-            forward = aimedDirection.normalize();
+            bulletDirection = aimedDirection.normalize();
         }
     }
 
-    const muzzle = originMesh.position.add(forward.scale(6.2));
-    App.createMuzzleFlash(muzzle, forward, mats.muzzleYellow, 0.9);
+    App.createMuzzleFlash(muzzle, bulletDirection, mats.muzzleYellow, 0.9);
 
     const bullet = App.createBullet(
         muzzle,
-        forward.scale(2.2),
+        bulletDirection.scale(2.2),
         new BABYLON.Color3(1, 0.94, 0.25),
         12,
         0.22,

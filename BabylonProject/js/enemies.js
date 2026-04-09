@@ -72,9 +72,8 @@ App.damagePlayer = function (amount) {
     );
 
     App.updateHud();
-
     if (App.player.health <= 0) {
-        App.endGame();
+        App.crashPlayer(App.player.mesh.position);
     }
 };
 
@@ -123,11 +122,11 @@ App.updateEnemies = function (deltaTime) {
             enemy.shootTimer = 0;
         }
 
-        if (enemy.mesh.position.subtract(App.player.mesh.position).length() < 2.8) {
-            App.damagePlayer(20);
-            App.createExplosion(enemy.mesh.position, new BABYLON.Color3(1, 0.35, 0.2), 1.6);
+        if (!App.playerCrashed && enemy.mesh.position.subtract(App.player.mesh.position).length() < 2.8) {
+            const enemyImpact = enemy.mesh.position.clone();
             enemy.mesh.dispose();
             App.enemies.splice(i, 1);
+            App.crashPlayer(enemyImpact, 3.1);
             continue;
         }
 

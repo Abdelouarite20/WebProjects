@@ -25,7 +25,6 @@ const App = {
     money: 0,
     survivalTime: 0,
     difficultyLevel: 1,
-    gameOver: false,
     enemySpawnTimer: 0,
     enemySpawnDelay: 2.1,
     levelEnemiesSpawned: 0,
@@ -41,14 +40,10 @@ const App = {
         scoreValue: document.getElementById("scoreValue"),
         timeValue: document.getElementById("timeValue"),
         levelValue: document.getElementById("levelValue"),
-        speedValue: document.getElementById("speedValue"),
-        speedNeedleWrap: document.getElementById("speedNeedleWrap"),
         shieldButton: document.getElementById("shieldButton"),
         speedButton: document.getElementById("speedButton"),
         bombButton: document.getElementById("bombButton"),
-        alliesButton: document.getElementById("alliesButton"),
-        gameOverPanel: document.getElementById("gameOverPanel"),
-        restartButton: document.getElementById("restartButton")
+        alliesButton: document.getElementById("alliesButton")
     }
 };
 
