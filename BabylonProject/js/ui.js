@@ -37,16 +37,21 @@ App.buyPower = function (type) {
 App.speedIndicatorConfig = App.speedIndicatorConfig || {
     minSpeed: 20,
     maxSpeed: 200,
-    minAngle: -132,
-    maxAngle: 132,
+    dialMinValue: 0,
+    dialMaxValue: 200,
+    dialStartAngle: 270,
+    dialEndAngle: 600,
     majorTickStep: 20,
-    minorTickStep: 10
-};
-
-App.clampSpeedIndicatorSpeed = function (speed) {
-    const config = App.speedIndicatorConfig;
-    const safeSpeed = Number.isFinite(speed) ? speed : config.minSpeed;
-    return BABYLON.Scalar.Clamp(safeSpeed, config.minSpeed, config.maxSpeed);
+    minorTickStep: 20,
+    needleOffsetDeg: 168,
+    anglePoints: [
+        { speed: 20, angle: 273 },
+        { speed: 60, angle: 352.5 },
+        { speed: 100, angle: 435 },
+        { speed: 140, angle: 517.5 },
+        { speed: 180, angle: 558.75 },
+        { speed: 200, angle: 600 }
+    ]
 };
 
 App.getDisplayedAirspeed = function () {
@@ -58,7 +63,11 @@ App.getDisplayedAirspeed = function () {
         ? App.player.indicatedSpeed
         : App.player.speed;
 
-    return App.clampSpeedIndicatorSpeed(sourceSpeed);
+    return BABYLON.Scalar.Clamp(
+        sourceSpeed,
+        App.speedIndicatorConfig.minSpeed,
+        App.speedIndicatorConfig.maxSpeed
+    );
 };
 
 App.getSpeedZone = function (speed) {
@@ -77,96 +86,151 @@ App.getSpeedZone = function (speed) {
 App.getSpeedZoneColors = function (zone) {
     if (zone === "low") {
         return {
-            ring: "#4db7ff",
-            innerRing: "rgba(108, 200, 255, 0.92)",
-            value: "#cfeeff",
-            accent: "#88d8ff",
-            glow: "rgba(64, 170, 255, 0.42)",
-            needle: "#79d6ff",
-            badge: "rgba(36, 104, 156, 0.82)"
+            ring: "#59b7ff",
+            inner: "rgba(117, 208, 255, 0.92)",
+            badge: "rgba(39, 101, 150, 0.86)",
+            value: "#d5f0ff",
+            needle: "#8ad9ff",
+            glow: "rgba(68, 177, 255, 0.36)"
         };
     }
 
     if (zone === "cruise") {
         return {
-            ring: "#57df98",
-            innerRing: "rgba(113, 238, 176, 0.95)",
-            value: "#e6fff0",
-            accent: "#9effc7",
-            glow: "rgba(64, 210, 130, 0.36)",
-            needle: "#ff774f",
-            badge: "rgba(31, 112, 78, 0.82)"
+            ring: "#65dea0",
+            inner: "rgba(132, 239, 188, 0.95)",
+            badge: "rgba(35, 108, 79, 0.86)",
+            value: "#e8fff2",
+            needle: "#ff7a52",
+            glow: "rgba(82, 223, 148, 0.3)"
         };
     }
 
     if (zone === "warning") {
         return {
-            ring: "#ffbc4c",
-            innerRing: "rgba(255, 205, 114, 0.95)",
-            value: "#fff0c5",
-            accent: "#ffd47c",
-            glow: "rgba(255, 181, 58, 0.38)",
-            needle: "#ff8c45",
-            badge: "rgba(138, 92, 19, 0.85)"
+            ring: "#ffbe58",
+            inner: "rgba(255, 211, 122, 0.95)",
+            badge: "rgba(129, 89, 24, 0.88)",
+            value: "#fff0c8",
+            needle: "#ff8f4b",
+            glow: "rgba(255, 190, 84, 0.34)"
         };
     }
 
     return {
-        ring: "#ff6457",
-        innerRing: "rgba(255, 135, 126, 0.95)",
+        ring: "#ff695d",
+        inner: "rgba(255, 144, 132, 0.95)",
+        badge: "rgba(135, 38, 31, 0.9)",
         value: "#ffd8d4",
-        accent: "#ff9d96",
-        glow: "rgba(255, 89, 76, 0.42)",
-        needle: "#ff675d",
-        badge: "rgba(132, 33, 28, 0.86)"
+        needle: "#ff6b60",
+        glow: "rgba(255, 98, 88, 0.38)"
     };
 };
 
-App.getSpeedIndicatorRatio = function (speed) {
-    const config = App.speedIndicatorConfig;
-    const clamped = App.clampSpeedIndicatorSpeed(speed);
-    return (clamped - config.minSpeed) / (config.maxSpeed - config.minSpeed);
+App.getSpeedIndicatorAngle = function (speed) {
+    const points = App.speedIndicatorConfig.anglePoints;
+    const clamped = BABYLON.Scalar.Clamp(
+        speed,
+        App.speedIndicatorConfig.minSpeed,
+        App.speedIndicatorConfig.maxSpeed
+    );
+
+    if (clamped <= points[0].speed) {
+        return points[0].angle;
+    }
+
+    for (let i = 0; i < points.length - 1; i++) {
+        const current = points[i];
+        const next = points[i + 1];
+        if (clamped <= next.speed) {
+            const ratio = (clamped - current.speed) / (next.speed - current.speed);
+            return current.angle + (next.angle - current.angle) * ratio;
+        }
+    }
+
+    return points[points.length - 1].angle;
 };
 
-App.getSpeedIndicatorAngle = function (speed) {
-    const config = App.speedIndicatorConfig;
-    const ratio = App.getSpeedIndicatorRatio(speed);
-    return config.minAngle + (config.maxAngle - config.minAngle) * ratio;
+App.getSpeedIndicatorDialAngle = function (value) {
+    const clamped = BABYLON.Scalar.Clamp(
+        value,
+        App.speedIndicatorConfig.dialMinValue,
+        App.speedIndicatorConfig.dialMaxValue
+    );
+    const ratio = (clamped - App.speedIndicatorConfig.dialMinValue)
+        / (App.speedIndicatorConfig.dialMaxValue - App.speedIndicatorConfig.dialMinValue);
+
+    return App.speedIndicatorConfig.dialStartAngle
+        + (App.speedIndicatorConfig.dialEndAngle - App.speedIndicatorConfig.dialStartAngle) * ratio;
 };
 
 App.addSpeedIndicatorTick = function (dial, value, isMajor) {
     const GUI = BABYLON.GUI;
-    const angleDeg = App.getSpeedIndicatorAngle(value);
-    const angleRad = BABYLON.Tools.ToRadians(angleDeg);
+    const angleDeg = App.getSpeedIndicatorDialAngle(value);
+    const angleRad = BABYLON.Tools.ToRadians(angleDeg - 180);
     const zone = App.getSpeedZone(value);
     const colors = App.getSpeedZoneColors(zone);
-    const tickLength = isMajor ? 20 : 10;
-    const tickWidth = isMajor ? 3 : 2;
-    const tickRadius = isMajor ? 94 : 96;
+    const tickLength = isMajor ? 10 : 6;
+    const tickWidth = isMajor ? 4 : 2;
+    const tickRadius = isMajor ? 96 : 98;
 
     const tick = new GUI.Rectangle("speedTick_" + value + "_" + (isMajor ? "major" : "minor"));
+    const tickCenterRadius = tickRadius - tickLength * 0.5;
     tick.width = tickWidth + "px";
     tick.height = tickLength + "px";
     tick.thickness = 0;
-    tick.background = isMajor ? colors.accent : "rgba(220, 232, 246, 0.52)";
+    tick.background = isMajor ? "rgba(244, 251, 255, 0.96)" : "rgba(224, 234, 247, 0.7)";
+    tick.shadowColor = isMajor ? colors.glow : "rgba(220, 235, 255, 0.18)";
+    tick.shadowBlur = isMajor ? 8 : 4;
+    tick.shadowOffsetX = 0;
+    tick.shadowOffsetY = 0;
     tick.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
     tick.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-    tick.top = -(tickRadius - tickLength * 0.5) + "px";
+    const zeroTickXOffset = value === 0 ? -4 : 0;
+    tick.left = Math.cos(angleRad) * tickCenterRadius + zeroTickXOffset + "px";
+    tick.top = Math.sin(angleRad) * tickCenterRadius + "px";
     tick.transformCenterX = 0.5;
-    tick.transformCenterY = 1.0;
-    tick.rotation = angleRad;
+    tick.transformCenterY = 0.5;
+    tick.rotation = angleRad - Math.PI * 0.5;
     dial.addControl(tick);
 
     if (isMajor) {
-        const labelRadius = 70;
+        const connectorRadius = 90;
+        const connector = new GUI.Rectangle("speedLabelConnector_" + value);
+        connector.width = "6px";
+        connector.height = "2px";
+        connector.thickness = 0;
+        connector.background = "rgba(244, 251, 255, 0.92)";
+        connector.shadowColor = colors.glow;
+        connector.shadowBlur = 6;
+        connector.shadowOffsetX = 0;
+        connector.shadowOffsetY = 0;
+        connector.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        connector.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        const zeroXOffset = value === 0 ? -4 : 0;
+        connector.left = Math.cos(angleRad) * connectorRadius + zeroXOffset + "px";
+        connector.top = Math.sin(angleRad) * connectorRadius + "px";
+        connector.rotation = angleRad;
+        dial.addControl(connector);
+
+        const labelRadius = 73;
         const label = new GUI.TextBlock("speedLabel_" + value, String(value));
         label.color = "#edf5ff";
         label.fontSize = 15;
         label.fontWeight = "700";
-        label.width = "42px";
-        label.height = "22px";
-        label.left = Math.cos(angleRad) * labelRadius + "px";
-        label.top = Math.sin(angleRad) * labelRadius + "px";
+        label.width = "46px";
+        label.height = "26px";
+        label.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        label.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        label.left = Math.cos(angleRad) * labelRadius + zeroXOffset + "px";
+        const labelYOffset = value === 0 ? 6 : 0;
+        label.top = Math.sin(angleRad) * labelRadius + labelYOffset + "px";
+        label.textHorizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+        label.textVerticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        label.paddingLeft = "0px";
+        label.paddingRight = "0px";
+        label.paddingTop = "0px";
+        label.paddingBottom = "0px";
         dial.addControl(label);
     }
 };
@@ -178,6 +242,8 @@ App.buildSpeedIndicator = function () {
 
     const GUI = BABYLON.GUI;
     App.hudTexture = App.hudTexture || GUI.AdvancedDynamicTexture.CreateFullscreenUI("planeHUD", true, App.scene);
+    App.hudTexture.idealWidth = 1920;
+    App.hudTexture.idealHeight = 1080;
 
     const panel = new GUI.Rectangle("speedPanel");
     panel.width = "300px";
@@ -190,34 +256,81 @@ App.buildSpeedIndicator = function () {
     App.hudTexture.addControl(panel);
 
     const shadow = new GUI.Ellipse("speedShadow");
-    shadow.width = "268px";
-    shadow.height = "268px";
+    shadow.width = "276px";
+    shadow.height = "276px";
     shadow.thickness = 0;
-    shadow.background = "rgba(0, 0, 0, 0.28)";
-    shadow.alpha = 0.8;
+    shadow.background = "rgba(0, 0, 0, 0.42)";
+    shadow.alpha = 0.95;
+    shadow.top = "6px";
+    shadow.left = "4px";
     panel.addControl(shadow);
 
     const bezel = new GUI.Ellipse("speedBezel");
     bezel.width = "252px";
     bezel.height = "252px";
-    bezel.thickness = 3;
-    bezel.color = "rgba(255, 255, 255, 0.22)";
-    bezel.background = "rgba(6, 11, 18, 0.92)";
+    bezel.thickness = 4;
+    bezel.color = "rgba(227, 236, 246, 0.44)";
+    bezel.background = "rgba(22, 28, 37, 0.99)";
+    bezel.shadowColor = "rgba(0, 0, 0, 0.52)";
+    bezel.shadowBlur = 22;
+    bezel.shadowOffsetX = 0;
+    bezel.shadowOffsetY = 10;
     panel.addControl(bezel);
+
+    const bezelTrim = new GUI.Ellipse("speedBezelTrim");
+    bezelTrim.width = "242px";
+    bezelTrim.height = "242px";
+    bezelTrim.thickness = 2;
+    bezelTrim.color = "rgba(255, 255, 255, 0.12)";
+    bezelTrim.background = "rgba(72, 82, 96, 0.14)";
+    bezel.addControl(bezelTrim);
+
+    [
+        { name: "Top", left: "0px", top: "-103px", slotRotation: 0 },
+        { name: "Right", left: "103px", top: "0px", slotRotation: Math.PI * 0.5 },
+        { name: "Bottom", left: "0px", top: "103px", slotRotation: 0 },
+        { name: "Left", left: "-103px", top: "0px", slotRotation: Math.PI * 0.5 }
+    ].forEach(cfg => {
+        const screw = new GUI.Ellipse("speedBezelScrew" + cfg.name);
+        screw.width = "10px";
+        screw.height = "10px";
+        screw.thickness = 1;
+        screw.color = "rgba(255, 255, 255, 0.18)";
+        screw.background = "rgba(64, 72, 84, 0.92)";
+        screw.left = cfg.left;
+        screw.top = cfg.top;
+        bezel.addControl(screw);
+
+        const screwSlot = new GUI.Rectangle("speedBezelScrewSlot" + cfg.name);
+        screwSlot.width = "5px";
+        screwSlot.height = "1px";
+        screwSlot.thickness = 0;
+        screwSlot.background = "rgba(12, 16, 22, 0.72)";
+        screwSlot.rotation = cfg.slotRotation;
+        screw.addControl(screwSlot);
+    });
 
     const bezelInner = new GUI.Ellipse("speedBezelInner");
     bezelInner.width = "232px";
     bezelInner.height = "232px";
     bezelInner.thickness = 2;
-    bezelInner.color = "rgba(163, 192, 222, 0.18)";
-    bezelInner.background = "rgba(9, 14, 24, 0.96)";
+    bezelInner.color = "rgba(196, 210, 228, 0.22)";
+    bezelInner.background = "rgba(8, 12, 18, 0.99)";
     bezel.addControl(bezelInner);
+
+    const faceRing = new GUI.Ellipse("speedFaceRing");
+    faceRing.width = "220px";
+    faceRing.height = "220px";
+    faceRing.thickness = 1;
+    faceRing.color = "rgba(255, 255, 255, 0.08)";
+    faceRing.background = "rgba(16, 22, 31, 0.55)";
+    bezelInner.addControl(faceRing);
 
     const glowRing = new GUI.Ellipse("speedGlowRing");
     glowRing.width = "214px";
     glowRing.height = "214px";
     glowRing.thickness = 2;
-    glowRing.color = "rgba(255, 255, 255, 0.10)";
+    glowRing.color = "rgba(214, 228, 244, 0.12)";
     glowRing.background = "transparent";
     bezelInner.addControl(glowRing);
 
@@ -228,30 +341,37 @@ App.buildSpeedIndicator = function () {
     glass.background = "rgba(255, 255, 255, 0.02)";
     bezelInner.addControl(glass);
 
+    const lowerShade = new GUI.Ellipse("speedLowerShade");
+    lowerShade.width = "196px";
+    lowerShade.height = "110px";
+    lowerShade.thickness = 0;
+    lowerShade.background = "rgba(0, 0, 0, 0.24)";
+    lowerShade.top = "48px";
+    bezelInner.addControl(lowerShade);
+
     const glassHighlight = new GUI.Ellipse("speedGlassHighlight");
-    glassHighlight.width = "180px";
-    glassHighlight.height = "92px";
+    glassHighlight.width = "182px";
+    glassHighlight.height = "84px";
     glassHighlight.thickness = 0;
-    glassHighlight.background = "rgba(255, 255, 255, 0.055)";
-    glassHighlight.top = "-64px";
+    glassHighlight.background = "rgba(255, 255, 255, 0.045)";
+    glassHighlight.top = "-66px";
+    glassHighlight.left = "-8px";
     bezelInner.addControl(glassHighlight);
 
     const title = new GUI.TextBlock("speedTitle", "AIRSPEED");
-    title.color = "#f3f8ff";
-    title.fontSize = 18;
-    title.fontWeight = "700";
-    title.top = "-88px";
+    title.color = "#f7fbff";
+    title.fontSize = 16;
+    title.fontWeight = "800";
+    title.letterSpacing = 2;
+    title.shadowColor = "rgba(0, 0, 0, 0.35)";
+    title.shadowBlur = 4;
+    title.shadowOffsetX = 0;
+    title.shadowOffsetY = 1;
+    title.top = "-28px";
     bezelInner.addControl(title);
 
-    const subtitle = new GUI.TextBlock("speedSubtitle", "COMBAT HUD");
-    subtitle.color = "rgba(210, 225, 241, 0.62)";
-    subtitle.fontSize = 11;
-    subtitle.top = "-68px";
-    bezelInner.addControl(subtitle);
-
-    for (let value = App.speedIndicatorConfig.minSpeed; value <= App.speedIndicatorConfig.maxSpeed; value += App.speedIndicatorConfig.minorTickStep) {
-        const isMajor = value % App.speedIndicatorConfig.majorTickStep === 0;
-        App.addSpeedIndicatorTick(bezelInner, value, isMajor);
+    for (let value = App.speedIndicatorConfig.dialMinValue; value <= App.speedIndicatorConfig.dialMaxValue; value += App.speedIndicatorConfig.majorTickStep) {
+        App.addSpeedIndicatorTick(bezelInner, value, true);
     }
 
     const needleShadow = new GUI.Rectangle("speedNeedleShadow");
@@ -304,72 +424,52 @@ App.buildSpeedIndicator = function () {
     bezelInner.addControl(tail);
 
     const hubOuter = new GUI.Ellipse("speedHubOuter");
-    hubOuter.width = "28px";
-    hubOuter.height = "28px";
+    hubOuter.width = "30px";
+    hubOuter.height = "30px";
     hubOuter.thickness = 2;
-    hubOuter.color = "rgba(255, 255, 255, 0.22)";
-    hubOuter.background = "#0d131b";
+    hubOuter.color = "rgba(255, 255, 255, 0.34)";
+    hubOuter.background = "#141c26";
+    hubOuter.shadowColor = "rgba(0, 0, 0, 0.42)";
+    hubOuter.shadowBlur = 12;
+    hubOuter.shadowOffsetX = 0;
+    hubOuter.shadowOffsetY = 2;
     bezelInner.addControl(hubOuter);
 
     const hubInner = new GUI.Ellipse("speedHubInner");
     hubInner.width = "14px";
     hubInner.height = "14px";
     hubInner.thickness = 1;
-    hubInner.color = "rgba(255, 255, 255, 0.55)";
-    hubInner.background = "#202a34";
+    hubInner.color = "rgba(255, 255, 255, 0.54)";
+    hubInner.background = "#313d4b";
     hubOuter.addControl(hubInner);
 
-    const readout = new GUI.Rectangle("speedReadout");
-    readout.width = "122px";
-    readout.height = "76px";
-    readout.thickness = 1;
-    readout.cornerRadius = 13;
-    readout.color = "rgba(255, 255, 255, 0.10)";
-    readout.background = "rgba(11, 16, 25, 0.96)";
-    readout.top = "66px";
-    bezelInner.addControl(readout);
-
-    const speedValue = new GUI.TextBlock("speedValue", "020");
-    speedValue.color = "#eafff3";
-    speedValue.fontSize = 36;
-    speedValue.fontWeight = "800";
-    speedValue.top = "-10px";
-    readout.addControl(speedValue);
-
-    const speedUnit = new GUI.TextBlock("speedUnit", "SPD");
-    speedUnit.color = "rgba(240, 246, 255, 0.70)";
-    speedUnit.fontSize = 12;
-    speedUnit.top = "14px";
-    readout.addControl(speedUnit);
+    const hubCenter = new GUI.Ellipse("speedHubCenter");
+    hubCenter.width = "6px";
+    hubCenter.height = "6px";
+    hubCenter.thickness = 0;
+    hubCenter.background = "rgba(201, 214, 227, 0.95)";
+    hubInner.addControl(hubCenter);
 
     const speedZone = new GUI.Rectangle("speedZoneBadge");
-    speedZone.width = "76px";
-    speedZone.height = "24px";
-    speedZone.thickness = 0;
-    speedZone.cornerRadius = 12;
-    speedZone.background = "rgba(36, 104, 156, 0.82)";
+    speedZone.width = "84px";
+    speedZone.height = "26px";
+    speedZone.thickness = 1;
+    speedZone.cornerRadius = 13;
+    speedZone.color = "rgba(255, 255, 255, 0.16)";
+    speedZone.background = "rgba(22, 47, 70, 0.94)";
     speedZone.top = "104px";
+    speedZone.shadowColor = "rgba(0, 0, 0, 0.25)";
+    speedZone.shadowBlur = 10;
+    speedZone.shadowOffsetX = 0;
+    speedZone.shadowOffsetY = 2;
     bezelInner.addControl(speedZone);
 
     const speedZoneText = new GUI.TextBlock("speedZoneText", "LOW");
     speedZoneText.color = "#ffffff";
     speedZoneText.fontSize = 11;
     speedZoneText.fontWeight = "700";
+    speedZoneText.letterSpacing = 1;
     speedZone.addControl(speedZoneText);
-
-    const minLabel = new GUI.TextBlock("speedMinLabel", "MIN 20");
-    minLabel.color = "rgba(208, 222, 237, 0.58)";
-    minLabel.fontSize = 10;
-    minLabel.left = "-70px";
-    minLabel.top = "98px";
-    bezelInner.addControl(minLabel);
-
-    const maxLabel = new GUI.TextBlock("speedMaxLabel", "MAX 200");
-    maxLabel.color = "rgba(208, 222, 237, 0.58)";
-    maxLabel.fontSize = 10;
-    maxLabel.left = "70px";
-    maxLabel.top = "98px";
-    bezelInner.addControl(maxLabel);
 
     App.speedIndicator = {
         panel: panel,
@@ -379,43 +479,31 @@ App.buildSpeedIndicator = function () {
         needle: needle,
         needleShadow: needleShadow,
         tail: tail,
-        speedValue: speedValue,
         speedZone: speedZone,
         speedZoneText: speedZoneText,
-        readout: readout,
         setSpeed(speed) {
-            const clamped = App.clampSpeedIndicatorSpeed(speed);
-            const rounded = Math.round(clamped);
+            const clamped = BABYLON.Scalar.Clamp(
+                speed,
+                App.speedIndicatorConfig.minSpeed,
+                App.speedIndicatorConfig.maxSpeed
+            );
             const angleDeg = App.getSpeedIndicatorAngle(clamped);
             const zone = App.getSpeedZone(clamped);
             const colors = App.getSpeedZoneColors(zone);
+            const angleRad = BABYLON.Tools.ToRadians(angleDeg - 90);
 
-            const angleRad = BABYLON.Tools.ToRadians(angleDeg);
 
             this.needle.rotation = angleRad;
             this.needleShadow.rotation = angleRad;
             this.tail.rotation = angleRad;
 
-            this.speedValue.text = String(rounded).padStart(3, "0");
             this.speedZoneText.text = zone.toUpperCase();
 
             this.bezel.color = colors.ring;
-            this.bezelInner.color = "rgba(255, 255, 255, 0.14)";
-            this.glowRing.color = colors.innerRing;
+            this.glowRing.color = colors.inner;
             this.needle.background = colors.needle;
-            this.speedValue.color = colors.value;
             this.speedZone.background = colors.badge;
 
-            this.readout.color = colors.glow;
-            this.readout.shadowColor = colors.glow;
-            this.readout.shadowBlur = 14;
-            this.readout.shadowOffsetX = 0;
-            this.readout.shadowOffsetY = 0;
-
-            this.speedValue.shadowColor = colors.glow;
-            this.speedValue.shadowBlur = 8;
-            this.speedValue.shadowOffsetX = 0;
-            this.speedValue.shadowOffsetY = 0;
         },
         dispose() {
             this.panel.dispose();

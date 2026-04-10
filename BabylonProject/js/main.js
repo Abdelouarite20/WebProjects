@@ -18,6 +18,7 @@ App.scene.onBeforeRenderObservable.add(() => {
     App.updateParticles(deltaTime);
     App.updateDifficulty(deltaTime);
     App.updateEffects();
+    App.updateHud();
     App.updateCamera();
 });
 
