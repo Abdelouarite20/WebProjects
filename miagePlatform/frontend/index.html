@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIAGE PLATFORM</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+    <main id="auth-page" class="active">
+        <div class="pixel-container">
+            <h1>L3 MIAGE</h1>
+
+            <div class="form-toggle">
+                <button class="toggle-btn active" id="login-toggle">CONNEXION</button>
+                <button class="toggle-btn" id="signup-toggle">INSCRIPTION</button>
+            </div>
+
+            <form id="login-form" class="auth-form active">
+                <div class="form-group">
+                    <label>E-MAIL</label>
+                    <input type="email" id="login-email" placeholder="joueur@miage.fr" required>
+                </div>
+                <div class="form-group">
+                    <label>MOT DE PASSE</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="submit-btn">ENTRER DANS L'ARCADE</button>
+            </form>
+
+            <form id="signup-form" class="auth-form">
+                <div class="form-group">
+                    <label>NOM D'UTILISATEUR</label>
+                    <input type="text" id="signup-username" placeholder="Pseudo" required>
+                </div>
+                <div class="form-group">
+                    <label>E-MAIL</label>
+                    <input type="email" id="signup-email" placeholder="votre@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>MOT DE PASSE</label>
+                    <input type="password" id="signup-password" placeholder="6+ caractères" required minlength="6">
+                </div>
+                <button type="submit" class="submit-btn">CRÉER MON COMPTE</button>
+            </form>
+
+            <div id="message" class="pixel-message"></div>
+        </div>
+    </main>
+
+    <main id="lobby-page">
+        <!-- NAVBAR -->
+        <nav class="pixel-navbar">
+            <div class="nav-brand">
+                <span class="nav-icon">🎮</span>
+                MIAGE <span class="text-accent">Play</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#hero-section">ACCUEIL</a></li>
+                <li><a href="#games-section">JEUX</a></li>
+                <li><a href="#leaderboard">CLASSEMENT</a></li>
+                <li><a href="#about-section">À PROPOS</a></li>
+            </ul>
+            <div class="nav-user">
+                <span>JOUEUR: <span id="username-display">...</span></span>
+                <button id="btn-logout" class="pixel-btn-red">QUITTER</button>
+            </div>
+        </nav>
+
+        <!-- PAGE CONTENT WRAPPER -->
+        <div class="lobby-content">
+            <!-- HERO SECTION RETRO -->
+            <section id="hero-section" class="pixel-hero">
+                <h2>JOUEZ. <span class="text-accent">COMPÉTITIONNEZ.</span> GAGNEZ.</h2>
+                <p>Trois jeux développés par les étudiants de MIAGE. Des défis originaux, des classements réels et conservés.</p>
+            </section>
+
+            
+
+            <!-- GAMES GRID -->
+            <section id="games-section" class="game-selection">
+                <!-- GAMES HEADER -->
+            <div class="section-header">
+                <p class="section-eyebrow">Notre catalogue</p>
+                <h2 class="section-title">Choisissez votre <span class="text-accent">Défi</span></h2>
+                <p class="section-desc">Trois expériences uniques en cours de développement.</p>
+            </div>
+            <div class="pixel-game-content">
+                <!-- CARD 1 -->
+            <div class="game-card" data-game="ttt">
+                <div class="pixel-badge">Bientôt disponible</div>
+                <img src="assets/images/bg1.png" alt="Morpion">
+                <h3>TIC-TAC-TOE</h3>
+                <div class="pixel-tags">
+                    <span class="pixel-tag">Stratégie</span>
+                    <span class="pixel-tag">2 Joueurs</span>
+                </div>
+                <p class="game-desc">Le grand classique revisité. Alignez vos symboles, bloquez votre adversaire.</p>
+                <div class="pixel-progress">
+                    <div class="progress-label">DÉVELOPPEMENT <span class="pct">70%</span></div>
+                    <div class="progress-bar"><div class="fill" style="width: 70%; background: #9b59b6;"></div></div>
+                </div>
+                <button>JOUER</button>
+            </div>
+
+            <!-- CARD 2 -->
+            <div class="game-card featured" data-game="canvas">
+                <div class="pixel-badge featured-badge">Le plus attendu</div>
+                <img src="assets/images/fish-bg.png" alt="Arcade 2D">
+                <h3>SPACE ATTACK</h3>
+                <div class="pixel-tags">
+                    <span class="pixel-tag">Arcade</span>
+                    <span class="pixel-tag">Action</span>
+                </div>
+                <p class="game-desc">Courez, sautez, esquivez ! Un jeu d'arcade 2D nerveux développé sur API Canvas HTML5.</p>
+                <div class="pixel-progress">
+                    <div class="progress-label">DÉVELOPPEMENT <span class="pct">55%</span></div>
+                    <div class="progress-bar"><div class="fill" style="width: 55%; background: var(--accent-yellow);"></div></div>
+                </div>
+                <button>JOUER</button>
+            </div>
+
+            <!-- CARD 3 -->
+            <div class="game-card" data-game="babylon">
+                <div class="pixel-badge">Bientôt disponible</div>
+                <img src="assets/images/planeAttack.png" alt="Concours 3D">
+                <h3>3D ADVENTURE</h3>
+                <div class="pixel-tags">
+                    <span class="pixel-tag">3D</span>
+                    <span class="pixel-tag">Immersif</span>
+                </div>
+                <p class="game-desc">Plongez dans un univers 3D époustouflant propulsé par Babylon.js.</p>
+                <div class="pixel-progress">
+                    <div class="progress-label">DÉVELOPPEMENT <span class="pct">40%</span></div>
+                    <div class="progress-bar"><div class="fill" style="width: 40%; background: var(--danger-red);"></div></div>
+                </div>
+                <button>JOUER</button>
+            </div>
+            </div>
+        </section>
+
+        <section id="leaderboard" class="pixel-container leaderboard-container">
+            <h2>🏆 CLASSEMENT MONDIAL</h2>
+            <div class="table-responsive">
+                <table class="pixel-table">
+                    <thead>
+                        <tr>
+                            <th>RANG</th>
+                            <th>JOUEUR</th>
+                            <th>SCORE</th>
+                            <th>JEU</th>
+                        </tr>
+                    </thead>
+                    <tbody id="score-list">
+                        <!-- Lignes de test (Mockup visuel) -->
+                        <tr class="rank-1">
+                            <td>🥇 1</td>
+                            <td>InvincibleMaster</td>
+                            <td>99,999</td>
+                            <td>Space Attack</td>
+                        </tr>
+                        <tr class="rank-2">
+                            <td>🥈 2</td>
+                            <td>CyberNinja</td>
+                            <td>85,420</td>
+                            <td>Space Attack</td>
+                        </tr>
+                        <tr class="rank-3">
+                            <td>🥉 3</td>
+                            <td>PixelQueen</td>
+                            <td>72,100</td>
+                            <td>Tic-Tac-Toe</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>NoobSlayer99</td>
+                            <td>45,000</td>
+                            <td>3D Adventure</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>PlayerOne</td>
+                            <td>12,500</td>
+                            <td>Tic-Tac-Toe</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+            <!-- ABOUT SECTION RETRO -->
+            <section id="about-section" class="pixel-about pixel-container">
+            <div class="section-header" style="margin-top: 10px;">
+                <p class="section-eyebrow">Notre histoire</p>
+                <h2 class="section-title">À PROPOS DU <span class="text-accent">PROJET</span></h2>
+            </div>
+            <div class="pixel-about-content">
+                <!-- Gauche : Textes -->
+                <div class="about-text">
+                    <p class="section-desc" style="text-align: left;">
+                        MIAGE Play est un projet académique. Trois jeux, une seule plateforme. Nous combinons nos compétences en développement web et algorithmique pour vous offrir une expérience rétro.
+                    </p>
+                    <div class="about-features">
+                        <div class="feature">
+                            <div class="feature-icon">🎓</div>
+                            <div>
+                                <strong>Projet Académique</strong>
+                                <p>Développé dans le cadre du cursus MIAGE</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-icon">💻</div>
+                            <div>
+                                <strong>Technologies Modernes</strong>
+                                <p>Node.js, Canvas, et API fluides</p>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <div class="feature-icon">🏆</div>
+                            <div>
+                                <strong>Compétition Réelle</strong>
+                                <p>Classements conservés en base de données</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Droite : Tech Stack visuel -->
+                <div class="about-visual">
+                    <div class="tech-stack">
+                        <div class="tech-bubble" style="--delay: 0s">HTML5</div>
+                        <div class="tech-bubble" style="--delay: 0.2s">Canvas API</div>
+                        <div class="tech-bubble" style="--delay: 0.4s">Babylon.js</div>
+                        <div class="tech-bubble" style="--delay: 0.6s">JavaScript</div>
+                        <div class="tech-bubble" style="--delay: 0.8s">MongoDB</div>
+                        <div class="tech-bubble" style="--delay: 1s">Node.js</div>
+                        <div class="tech-bubble" style="--delay: 1.2s">CSS3 Retro</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+            <!-- FOOTER -->
+            <footer class="pixel-footer">
+                <p>Projet étudiant MIAGE · DIALLO & GHILANE · 2025–2026</p>
+            </footer>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

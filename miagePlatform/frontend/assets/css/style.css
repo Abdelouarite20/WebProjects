@@ -1,0 +1,659 @@
+/* ==========================================
+   1. VARIABLES & RESET
+   ========================================== */
+:root {
+    --pixel-border: 1px solid rgba(255, 255, 255, 0.15);
+    --main-bg: rgba(15, 15, 20, 0.6);
+    --accent-yellow: #f1c40f;
+    --danger-red: #e74c3c;
+    --text-color: #ffffff;
+    --neon-glow: 0 0 20px rgba(241, 196, 15, 0.4);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)), url('../images/bg2.png') no-repeat center center fixed;
+    background-size: cover;
+    animation: floatingBg 15s ease-in-out infinite;
+    
+    font-family: 'Courier New', Courier, monospace;
+    color: var(--text-color);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+@keyframes floatingBg {
+    0%, 100% {
+        background-attachment: fixed;
+        filter: brightness(0.95);
+    }
+    50% {
+        background-attachment: fixed;
+        filter: brightness(1);
+    }
+}
+
+/* ==========================================
+   2. STRUCTURE DES PAGES (Main)
+   ========================================== */
+html {
+    scroll-behavior: smooth;
+}
+
+main {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+main.active {
+    display: flex;
+}
+
+/* Page d'authentification centrée */
+#auth-page {
+    min-height: 100vh;
+    justify-content: center;
+    padding-top: 0;
+}
+
+#lobby-page {
+    min-height: auto;
+    justify-content: flex-start;
+    padding-top: 80px;
+}
+
+/* ==========================================
+   3. PAGE D'AUTHENTIFICATION (Login/Register)
+   ========================================== */
+.pixel-container {
+    background: var(--main-bg);
+    backdrop-filter: blur(12px);
+    border: var(--pixel-border);
+    border-radius: 16px;
+    padding: 30px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+/* Pour la page about qui devrait être plus large */
+#about-section {
+    max-width: 1200px !important;
+}
+
+.form-toggle {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 25px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.toggle-btn.active {
+    color: var(--accent-yellow);
+    border-bottom: 4px solid var(--accent-yellow);
+    margin-bottom: -2px;
+}
+
+.auth-form {
+    display: none;
+    flex-direction: column;
+    gap: 15px;
+    text-align: left;
+}
+
+.auth-form.active {
+    display: flex;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-size: 0.8rem;
+    color: var(--accent-yellow);
+}
+
+input {
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    background: rgba(0,0,0,0.4);
+    color: #fff;
+    font-family: inherit;
+    transition: all 0.3s;
+}
+
+input:focus {
+    border-color: var(--accent-yellow);
+    box-shadow: var(--neon-glow);
+    outline: none;
+}
+
+/* ==========================================
+   4. LE LOBBY (Page des jeux)
+   ========================================== */
+#lobby-page {
+    padding-top: 80px; /* Espace pour le header fixe */
+    padding-bottom: 0;
+    justify-content: flex-start;
+}
+
+/* Conteneur principal du lobby */
+.lobby-content {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Grille de jeux centralisée */
+.game-selection .pixel-game-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    margin: 40px 0;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Carte de jeu - définition unique */
+.game-card {
+    background: var(--main-bg);
+    backdrop-filter: blur(10px);
+    border: var(--pixel-border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease-out;
+    min-height: 500px;
+}
+
+.game-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent-yellow);
+    box-shadow: 0 15px 40px rgba(241, 196, 15, 0.2);
+}
+
+.game-card img {
+    width: 100%;
+    height: 140px;
+    object-fit: contain;
+    margin-bottom: 15px;
+    background: rgba(255,255,255,0.05); 
+    border-radius: 12px;
+}
+
+.pixel-badge {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background: #555;
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 5px 10px;
+    border: 2px solid #fff;
+    transform: rotate(5deg);
+    box-shadow: 3px 3px 0 #000;
+    border-radius: 4px;
+}
+
+.featured-badge {
+    background: var(--danger-red);
+}
+
+/* ==========================================
+   5. BOUTONS & MESSAGES
+   ========================================== */
+button {
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.2s ease-out;
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, var(--accent-yellow), #f39c12);
+    color: #000;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.pixel-btn-red {
+    background: linear-gradient(135deg, var(--danger-red), #c0392b);
+    color: white;
+    padding: 8px 15px;
+}
+
+.game-card button {
+    background: linear-gradient(135deg, var(--accent-yellow), #f39c12);
+    color: #000;
+    width: 100%;
+    padding: 12px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-top: auto;
+}
+
+.game-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--neon-glow);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+.pixel-message {
+    margin-top: 15px;
+    padding: 10px;
+    display: none;
+    border: 2px solid #fff;
+    font-size: 0.8rem;
+}
+
+.pixel-message.success { color: #2ecc71; border-color: #2ecc71; display: block; }
+.pixel-message.error { color: #e74c3c; border-color: #e74c3c; display: block; }
+
+#leaderboard {
+    width: 100%;
+    max-width: 800px;
+    margin-top: 60px;
+    margin-bottom: 40px;
+}
+
+/* ==========================================
+   6. NOUVEAUTÉS LOBBY (HERO, TAGS, ABOUT)
+   ========================================== */
+.pixel-hero {
+    text-align: center;
+    margin: 40px 0;
+    padding: 40px 20px;
+    background: radial-gradient(ellipse at center, rgba(168,85,247,0.15) 0%, transparent 70%);
+    border-radius: 16px;
+    width: 100%;
+}
+
+.pixel-hero h2 {
+    font-size: 2.8rem;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+
+.pixel-hero p {
+    font-size: 1rem;
+    color: #ccc;
+    max-width: 700px;
+    margin: 0 auto;
+}
+.text-accent {
+    background: linear-gradient(135deg, #a855f7, #22d3ee);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Suppression de la définition dupliquée de .game-card ci-dessous */
+
+.game-card img {
+    width: 100%;
+    height: 140px;
+    object-fit: contain;
+    margin-bottom: 15px;
+    background: rgba(255,255,255,0.05); 
+    border-radius: 12px;
+}
+
+.pixel-tags {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.pixel-tag {
+    font-size: 0.7rem;
+    background: #222;
+    padding: 3px 8px;
+    border: 1px solid #555;
+    color: var(--accent-yellow);
+}
+
+.game-desc {
+    font-size: 0.85rem;
+    color: #ccc;
+    margin: 15px 0;
+    line-height: 1.4;
+    min-height: 50px;
+}
+
+.pixel-progress {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.progress-label {
+    font-size: 0.7rem;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+.progress-label .pct {
+    color: var(--accent-yellow);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #111;
+    border: 2px solid #444;
+}
+
+.progress-bar .fill {
+    height: 100%;
+}
+
+.pixel-about {
+    width: 100%;
+    max-width: 1200px;
+    margin-top: 60px;
+    margin-bottom: 60px;
+}
+
+.pixel-about p {
+    margin: 15px 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.pixel-about-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+    margin-top: 20px;
+    text-align: left;
+}
+
+.about-features {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 15px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    transition: all 0.3s;
+}
+.feature:hover {
+    border-color: var(--accent-yellow);
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.2);
+}
+
+.feature-icon {
+    font-size: 1.5rem;
+}
+
+.feature strong {
+    color: var(--accent-yellow);
+}
+
+.feature p {
+    margin: 0 !important;
+    font-size: 0.8rem !important;
+    color: #ccc;
+}
+
+.tech-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.tech-bubble {
+    padding: 8px 12px;
+    background: #111;
+    border: 2px solid #fff;
+    font-size: 0.85rem;
+    font-weight: bold;
+    animation: float-bubble 4s ease-in-out infinite;
+    animation-delay: var(--delay);
+}
+
+@keyframes float-bubble {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-8px); }
+}
+
+@media (max-width: 1024px) {
+    .game-selection {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        padding: 0 20px;
+    }
+
+    .pixel-navbar {
+        flex-direction: column;
+        gap: 15px;
+        padding: 10px 20px;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        gap: 10px;
+        order: 3;
+        width: 100%;
+    }
+
+    .nav-user {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .pixel-hero h2 {
+        font-size: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+    }
+
+    .game-selection {
+        grid-template-columns: 1fr;
+    }
+
+    .pixel-about-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .pixel-footer {
+        padding: 20px;
+        font-size: 0.75rem;
+    }
+}
+
+.pixel-footer {
+    text-align: center;
+    padding: 30px;
+    font-size: 0.8rem;
+    color: #f5ecec;
+    border-top: 2px dashed #131111;
+    width: 100%;
+    margin-top: 20px;
+    background-color: rgba(37, 36, 36, 0.5);
+}
+
+/* ==========================================
+   7. NAVBAR & LEADERBOARD PRO
+   ========================================== */
+.pixel-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(10, 10, 15, 0.7);
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 15px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+}
+
+.nav-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 30px;
+}
+
+.nav-links a {
+    color: #ccc;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+    font-weight: bold;
+}
+
+.nav-links a:hover {
+    color: var(--accent-yellow);
+}
+
+.nav-user {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.9rem;
+}
+
+.leaderboard-container {
+    width: 100%;
+    max-width: 800px !important;
+    margin-top: 60px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+.pixel-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.pixel-table th {
+    background: #222;
+    padding: 12px;
+    border-bottom: 2px solid #555;
+    color: var(--accent-yellow);
+}
+
+.pixel-table td {
+    padding: 12px;
+    border-bottom: 1px dashed #333;
+}
+
+.pixel-table tr:hover td {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.rank-1 td {
+    color: #FFD700;
+    text-shadow: 2px 2px 0px #000;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.rank-2 td {
+    color: #C0C0C0;
+    font-weight: bold;
+}
+
+.rank-3 td {
+    color: #CD7F32;
+    font-weight: bold;
+}
+
+/* ==========================================
+   8. TITRES DE SECTION
+   ========================================== */
+.section-header {
+    text-align: center;
+    margin: 60px 0 20px 0;
+    width: 100%;
+}
+
+.section-eyebrow {
+    color: var(--danger-red);
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.section-title {
+    font-size: 2.2rem;
+    margin: 8px 0;
+}
+
+.section-desc {
+    color: #ccc;
+    font-size: 0.95rem;
+}
