@@ -142,4 +142,71 @@ document.addEventListener('DOMContentLoaded', () => {
         clearMessage();
         console.log("Déconnexion effectuée");
     });
+
+    // 6. GESTION DES BOUTONS JOUER
+    const playButtons = document.querySelectorAll('.game-card button');
+    playButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const card = e.target.closest('.game-card');
+            const gameId = card.getAttribute('data-game');
+            
+            if (gameId === 'ttt' || gameId === '2048') {
+                window.location.href = 'games/DOMProject/index.html';
+            }
+        });
+    });
+
+    // 7. CHARGER LE LEADERBOARD DYNAMIQUEMENT
+    async function loadLeaderboard() {
+        try {
+            const games = ['2048', 'canvas', 'babylon'];
+            const scoreList = document.getElementById('score-list');
+            let allScores = [];
+
+            // Récupérer les scores de tous les jeux
+            for (const game of games) {
+                const response = await fetch(`http://localhost:5000/api/scores/leaderboard/${game}`);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    allScores = allScores.concat(data.data.map(score => ({
+                        ...score,
+                        gameName: game
+                    })));
+                }
+            }
+
+            // Trier par score décroissant
+            allScores.sort((a, b) => b.points - a.points);
+
+            // Remplir le tableau
+            scoreList.innerHTML = '';
+            allScores.slice(0, 50).forEach((score, index) => {
+                const rank = index + 1;
+                let medal = '';
+                if (rank === 1) medal = '🥇';
+                else if (rank === 2) medal = '🥈';
+                else if (rank === 3) medal = '🥉';
+
+                const row = document.createElement('tr');
+                if (rank <= 3) row.className = `rank-${rank}`;
+                
+                row.innerHTML = `
+                    <td>${medal} ${rank}</td>
+                    <td>${score.user?.username || 'Joueur inconnu'}</td>
+                    <td>${score.points.toLocaleString('fr-FR')}</td>
+                    <td>${score.gameName}</td>
+                `;
+                scoreList.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Erreur chargement leaderboard:', error);
+        }
+    }
+
+    // Charger le leaderboard au démarrage
+    loadLeaderboard();
+    // Rafraîchir toutes les 30 secondes
+    setInterval(loadLeaderboard, 30000);
+
 });

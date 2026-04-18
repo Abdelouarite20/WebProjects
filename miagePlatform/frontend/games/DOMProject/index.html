@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048 MIAGE</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script type="module" src="js/script.js" defer></script>
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="left-panel">
+            <header>
+                <h1>2048 - MIAGE -</h1>
+                <div class="scores-container">
+                    <div class="score-box">
+                        <div class="score-title">SCORE</div>
+                        <div id="score">0</div>
+                    </div>
+                    <button id="restart-btn" class="restart-btn">Nouvelle Partie</button>
+                </div>
+            </header>
+
+            <div class="instructions-box">
+                <h2>Comment jouer :</h2>
+                <p>Utilisez les <strong>flèches directionnelles</strong> de votre clavier pour déplacer les tuiles.</p>
+                <p>Les tuiles comportant le même nombre fusionnent en s'additionnant lorsqu'elles se rencontrent.</p>
+                <p>Additionnez-les pour atteindre la tuile <strong>2048</strong> et gagner la partie !</p>
+            </div>
+        </aside>
+
+        <main class="right-panel">
+            <div class="level-select-container">
+                <label for="level-select">Choix du Niveau :</label>
+                <select id="level-select" class="control-input">
+                    <option value="hard">Difficile (3x3)</option>
+                    <option value="classic" selected>Classique (4x4)</option>
+                    <option value="easy">Facile (5x5)</option>
+                    <option value="very-easy">Très Facile (6x6)</option>
+                </select>
+            </div>
+
+            <div class="game-container">
+                <div id="game-over-message" class="game-message hidden">
+                    <p>Fin de partie !</p>
+                    <button id="retry-btn">Réessayer</button>
+                </div>
+                
+                <div class="grid-container" id="grid">
+                    <!-- Background cells will be generated here -->
+                </div>
+                
+                <div class="tile-container" id="tile-container">
+                    <!-- Tiles will be appended here -->
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
