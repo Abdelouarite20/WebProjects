@@ -48,13 +48,14 @@ const GameState = {
 };
 
 const HIGH_SCORE_KEY = 'crazyFishHighScores';
+const DEFAULT_DIFFICULTY = 'medium';
 const MAX_BUBBLES = 40;
 const BUBBLE_SPAWN_CHANCE = 0.08;
 const BACKGROUND_WAVE_COUNT = 5;
 const BACKGROUND_WAVE_STEP = 18;
 
 let currentState = GameState.MENU;
-let selectedDifficulty = 'medium';
+let selectedDifficulty = DEFAULT_DIFFICULTY;
 let canvas;
 let ctx;
 let player;
@@ -266,11 +267,14 @@ function quitRunToMenu() {
 
 function showMenu() {
     currentState = GameState.MENU;
+    selectedDifficulty = DEFAULT_DIFFICULTY;
+    resetPointerState();
     resetPauseState();
 }
 
 function showHighScores() {
     currentState = GameState.HIGHSCORES;
+    resetPointerState();
     resetPauseState();
 }
 
@@ -278,6 +282,7 @@ function startGame() {
     currentState = GameState.PLAYING;
     score = 0;
     startTime = Date.now();
+    resetPointerState();
     resetPauseState();
 
     const diff = CONFIG.difficulty[selectedDifficulty];
@@ -648,6 +653,11 @@ function resetPauseState() {
     });
 }
 
+function resetPointerState() {
+    mouse.x = -1;
+    mouse.y = -1;
+}
+
 function pauseGame() {
     if (currentState !== GameState.PLAYING) return;
     currentState = GameState.PAUSED;
@@ -840,7 +850,6 @@ function drawMenu() {
             height: buttonHeight,
             label: diff.label,
             accent: diff.color,
-            selected: selectedDifficulty === diff.id,
             onClick: () => {
                 selectedDifficulty = diff.id;
                 startGame();
