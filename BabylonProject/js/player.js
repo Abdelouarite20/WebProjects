@@ -1,4 +1,4 @@
-App.playerCrashed = false;
+﻿App.playerCrashed = false;
 App.playerRespawnDelay = 1.6;
 App.crashColliders = App.crashColliders || [];
 
@@ -64,6 +64,30 @@ App.getPlayerCrashCenter = function () {
 
 App.getPlayerCrashRadius = function () {
     return App.player.collisionRadius || 2.2;
+};
+
+App.checkPlayerGroundCrash = function () {
+    if (App.playerCrashed || !App.player || !App.getGroundHeight) {
+        return false;
+    }
+
+    const x = App.player.mesh.position.x;
+    const z = App.player.mesh.position.z;
+    const groundHeight = App.getGroundHeight(x, z);
+    const crashAltitude = groundHeight + App.getPlayerCrashRadius() * 0.9;
+
+    if (App.player.mesh.position.y > crashAltitude) {
+        return false;
+    }
+
+    const hitPoint = new BABYLON.Vector3(
+        x,
+        groundHeight + 0.4,
+        z
+    );
+
+    App.crashPlayer(hitPoint, 3.3, App.player.mesh);
+    return true;
 };
 
 App.triggerObstacleCrash = function (mesh, forward) {
@@ -277,6 +301,7 @@ App.createPlayer = function () {
         maxPitch: 0.7,
 
         minAltitude: 16,
+        absoluteMinAltitude: -40,
         maxAltitude: 320,
         bounds: 1680,
         collisionRadius: 2.2,
@@ -421,16 +446,16 @@ App.updatePlayer = function (deltaTime) {
     );
     App.player.mesh.position.y = BABYLON.Scalar.Clamp(
         App.player.mesh.position.y,
-        App.player.minAltitude,
+        App.player.absoluteMinAltitude,
         App.player.maxAltitude
     );
 
-    if (App.checkPlayerCrashCollisions()) {
+    if (App.checkPlayerGroundCrash()) {
         return;
     }
 
-    if (App.player.mesh.position.y === App.player.minAltitude && App.player.pitch < 0) {
-        App.player.pitch = 0;
+    if (App.checkPlayerCrashCollisions()) {
+        return;
     }
 
     if (App.player.mesh.position.y === App.player.maxAltitude && App.player.pitch > 0) {
@@ -519,9 +544,13 @@ App.updatePlayerTurnOver = function (deltaTime) {
     );
     App.player.mesh.position.y = BABYLON.Scalar.Clamp(
         App.player.mesh.position.y,
-        App.player.minAltitude,
+        App.player.absoluteMinAltitude,
         App.player.maxAltitude + 80
     );
+
+    if (App.checkPlayerGroundCrash()) {
+        return;
+    }
 
     if (App.checkPlayerCrashCollisions()) {
         return;

@@ -10,6 +10,7 @@
         mat.specularColor = options.specularColor || BABYLON.Color3.Black();
         mat.alpha = options.alpha !== undefined ? options.alpha : 1;
         mat.disableLighting = options.disableLighting !== undefined ? options.disableLighting : true;
+        mat.backFaceCulling = options.backFaceCulling !== undefined ? options.backFaceCulling : true;
         return mat;
     };
 
@@ -38,18 +39,51 @@
             emissiveColor: new BABYLON.Color3(1.0, 0.86, 0.82)
         }),
 
-        rocketCore: makeMat("rocketCoreMat", {
-            diffuseColor: new BABYLON.Color3(0.28, 0.3, 0.34),
-            emissiveColor: new BABYLON.Color3(0.25, 0.18, 0.12),
+        rocketBody: makeMat("rocketBodyMat", {
+            diffuseColor: new BABYLON.Color3(0.76, 0.78, 0.82),
+            emissiveColor: new BABYLON.Color3(0.08, 0.08, 0.1),
+            specularColor: new BABYLON.Color3(0.95, 0.95, 0.98),
+            disableLighting: false
+        }),
+        rocketBand: makeMat("rocketBandMat", {
+            diffuseColor: new BABYLON.Color3(0.22, 0.24, 0.3),
+            emissiveColor: new BABYLON.Color3(0.1, 0.08, 0.08),
+            specularColor: new BABYLON.Color3(0.55, 0.55, 0.6),
             disableLighting: false
         }),
         rocketNose: makeMat("rocketNoseMat", {
-            diffuseColor: new BABYLON.Color3(0.86, 0.42, 0.16),
-            emissiveColor: new BABYLON.Color3(0.8, 0.32, 0.12)
+            diffuseColor: new BABYLON.Color3(0.9, 0.42, 0.14),
+            emissiveColor: new BABYLON.Color3(0.34, 0.12, 0.04),
+            specularColor: new BABYLON.Color3(0.85, 0.76, 0.68),
+            disableLighting: false
         }),
-        rocketFlame: makeMat("rocketFlameMat", {
-            emissiveColor: new BABYLON.Color3(1.0, 0.62, 0.16),
-            alpha: 0.46
+        rocketNozzle: makeMat("rocketNozzleMat", {
+            diffuseColor: new BABYLON.Color3(0.16, 0.17, 0.19),
+            emissiveColor: new BABYLON.Color3(0.05, 0.05, 0.05),
+            specularColor: new BABYLON.Color3(0.22, 0.22, 0.24),
+            disableLighting: false
+        }),
+        rocketFin: makeMat("rocketFinMat", {
+            diffuseColor: new BABYLON.Color3(0.24, 0.25, 0.29),
+            emissiveColor: new BABYLON.Color3(0.06, 0.06, 0.07),
+            specularColor: new BABYLON.Color3(0.45, 0.45, 0.5),
+            disableLighting: false
+        }),
+        rocketFinAccent: makeMat("rocketFinAccentMat", {
+            diffuseColor: new BABYLON.Color3(0.78, 0.34, 0.12),
+            emissiveColor: new BABYLON.Color3(0.16, 0.06, 0.02),
+            specularColor: new BABYLON.Color3(0.5, 0.38, 0.28),
+            disableLighting: false
+        }),
+        rocketExhaustCore: makeMat("rocketExhaustCoreMat", {
+            emissiveColor: new BABYLON.Color3(1.0, 0.92, 0.66),
+            alpha: 0.86,
+            backFaceCulling: false
+        }),
+        rocketExhaustGlow: makeMat("rocketExhaustGlowMat", {
+            emissiveColor: new BABYLON.Color3(1.0, 0.56, 0.16),
+            alpha: 0.34,
+            backFaceCulling: false
         }),
 
         trailYellow: makeMat("trailYellowMat", {
@@ -147,88 +181,308 @@ App.createMuzzleFlash = function (position, direction, material, scale) {
     }
 };
 
+App.createRocketSmokeTrail = function (root, size, accentColor) {
+    if (!App.getEffectTextures) {
+        return null;
+    }
+
+    const textures = App.getEffectTextures();
+    if (!textures || !textures.smoke) {
+        return null;
+    }
+
+    const smoke = new BABYLON.ParticleSystem("rocketSmoke" + Math.random(), 140, App.scene);
+    smoke.particleTexture = textures.smoke;
+    smoke.emitter = root;
+    smoke.minEmitBox = new BABYLON.Vector3(0, 0, -size * 2.55);
+    smoke.maxEmitBox = new BABYLON.Vector3(0, 0, -size * 2.55);
+    smoke.color1 = new BABYLON.Color4(1.0, 0.64, 0.2, 0.92);
+    smoke.color2 = new BABYLON.Color4(0.24, 0.24, 0.26, 0.76);
+    smoke.colorDead = new BABYLON.Color4(0.05, 0.05, 0.05, 0.0);
+
+    if (accentColor) {
+        smoke.color1 = new BABYLON.Color4(
+            Math.min(1, 0.55 + accentColor.r * 0.52),
+            Math.min(1, 0.32 + accentColor.g * 0.7),
+            Math.min(1, 0.12 + accentColor.b * 0.45),
+            0.92
+        );
+    }
+
+    smoke.minSize = size * 0.46;
+    smoke.maxSize = size * 1.22;
+    smoke.minLifeTime = 0.08;
+    smoke.maxLifeTime = 0.32;
+    smoke.emitRate = 130;
+    smoke.minEmitPower = 0.25;
+    smoke.maxEmitPower = 0.95;
+    smoke.direction1 = new BABYLON.Vector3(-0.18, -0.18, -2.4);
+    smoke.direction2 = new BABYLON.Vector3(0.18, 0.18, -3.15);
+    smoke.gravity = BABYLON.Vector3.Zero();
+    smoke.updateSpeed = 0.015;
+    smoke.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
+    smoke.disposeOnStop = true;
+
+    if ("isLocal" in smoke) {
+        smoke.isLocal = true;
+    }
+
+    smoke.start();
+    return smoke;
+};
+
+App.createRocketVisual = function (root, size, accentColor) {
+    const mats = App.getProjectileMaterials();
+    const rocketAccent = accentColor ? accentColor.clone() : new BABYLON.Color3(1, 0.44, 0.14);
+    const bodyLength = size * 4.6;
+    const bodyFront = bodyLength * 0.5;
+
+    const noseMat = mats.rocketNose.clone("rocketNoseInstMat" + Math.random());
+    noseMat.diffuseColor = BABYLON.Color3.Lerp(rocketAccent, new BABYLON.Color3(0.98, 0.86, 0.76), 0.28);
+    noseMat.emissiveColor = rocketAccent.scale(0.42);
+
+    const bandMat = mats.rocketBand.clone("rocketBandInstMat" + Math.random());
+    bandMat.diffuseColor = BABYLON.Color3.Lerp(mats.rocketBand.diffuseColor, rocketAccent, 0.28);
+    bandMat.emissiveColor = rocketAccent.scale(0.14);
+
+    const finAccentMat = mats.rocketFinAccent.clone("rocketFinAccentInstMat" + Math.random());
+    finAccentMat.diffuseColor = BABYLON.Color3.Lerp(rocketAccent, new BABYLON.Color3(0.7, 0.22, 0.08), 0.18);
+    finAccentMat.emissiveColor = rocketAccent.scale(0.16);
+
+    const exhaustCoreMat = mats.rocketExhaustCore.clone("rocketExhaustCoreInstMat" + Math.random());
+    exhaustCoreMat.emissiveColor = BABYLON.Color3.Lerp(new BABYLON.Color3(1.0, 0.96, 0.74), rocketAccent, 0.22);
+
+    const exhaustGlowMat = mats.rocketExhaustGlow.clone("rocketExhaustGlowInstMat" + Math.random());
+    exhaustGlowMat.emissiveColor = BABYLON.Color3.Lerp(new BABYLON.Color3(1.0, 0.62, 0.18), rocketAccent, 0.32);
+
+    const body = BABYLON.MeshBuilder.CreateCylinder("rocketBody", {
+        height: bodyLength,
+        diameterTop: size * 0.66,
+        diameterBottom: size * 0.8,
+        tessellation: 12
+    }, App.scene);
+    body.parent = root;
+    body.rotation.x = Math.PI / 2;
+    body.material = mats.rocketBody;
+    body.isPickable = false;
+
+    const bandFront = BABYLON.MeshBuilder.CreateCylinder("rocketBandFront", {
+        height: size * 0.26,
+        diameter: size * 0.84,
+        tessellation: 12
+    }, App.scene);
+    bandFront.parent = root;
+    bandFront.rotation.x = Math.PI / 2;
+    bandFront.position.z = size * 0.42;
+    bandFront.material = bandMat;
+    bandFront.isPickable = false;
+
+    const bandRear = BABYLON.MeshBuilder.CreateCylinder("rocketBandRear", {
+        height: size * 0.22,
+        diameter: size * 0.86,
+        tessellation: 12
+    }, App.scene);
+    bandRear.parent = root;
+    bandRear.rotation.x = Math.PI / 2;
+    bandRear.position.z = -size * 0.46;
+    bandRear.material = bandMat;
+    bandRear.isPickable = false;
+
+    const nose = BABYLON.MeshBuilder.CreateCylinder("rocketNose", {
+        height: size * 1.18,
+        diameterTop: 0,
+        diameterBottom: size * 0.66,
+        tessellation: 12
+    }, App.scene);
+    nose.parent = root;
+    nose.rotation.x = Math.PI / 2;
+    nose.position.z = bodyFront + size * 0.52;
+    nose.material = noseMat;
+    nose.isPickable = false;
+
+    const nozzle = BABYLON.MeshBuilder.CreateCylinder("rocketNozzle", {
+        height: size * 0.52,
+        diameterTop: size * 0.48,
+        diameterBottom: size * 0.34,
+        tessellation: 12
+    }, App.scene);
+    nozzle.parent = root;
+    nozzle.rotation.x = Math.PI / 2;
+    nozzle.position.z = -bodyFront - size * 0.08;
+    nozzle.material = mats.rocketNozzle;
+    nozzle.isPickable = false;
+
+    for (let i = 0; i < 4; i++) {
+        const fin = BABYLON.MeshBuilder.CreateBox("rocketFin" + i, {
+            width: size * 0.8,
+            height: size * 0.1,
+            depth: size * 0.48
+        }, App.scene);
+        fin.parent = root;
+        fin.position.z = -size * 0.92;
+        fin.material = i % 2 === 0 ? mats.rocketFin : finAccentMat;
+        fin.isPickable = false;
+
+        if (i < 2) {
+            fin.position.x = (i === 0 ? 1 : -1) * size * 0.42;
+        } else {
+            fin.position.y = (i === 2 ? 1 : -1) * size * 0.42;
+            fin.rotation.z = Math.PI / 2;
+        }
+    }
+
+    const flameCore = BABYLON.MeshBuilder.CreateCylinder("rocketFlameCore", {
+        height: size * 1.05,
+        diameterTop: 0,
+        diameterBottom: size * 0.28,
+        tessellation: 10
+    }, App.scene);
+    flameCore.parent = root;
+    flameCore.rotation.x = -Math.PI / 2;
+    flameCore.position.z = -bodyFront - size * 0.66;
+    flameCore.material = exhaustCoreMat;
+    flameCore.isPickable = false;
+
+    const flameGlow = BABYLON.MeshBuilder.CreateCylinder("rocketFlameGlow", {
+        height: size * 1.7,
+        diameterTop: 0,
+        diameterBottom: size * 0.48,
+        tessellation: 10
+    }, App.scene);
+    flameGlow.parent = root;
+    flameGlow.rotation.x = -Math.PI / 2;
+    flameGlow.position.z = -bodyFront - size * 0.9;
+    flameGlow.material = exhaustGlowMat;
+    flameGlow.isPickable = false;
+
+    return {
+        core: flameCore,
+        glow: flameGlow,
+        pulseTime: Math.random() * Math.PI * 2
+    };
+};
+
+App.updateRocketVisual = function (bullet, deltaTime) {
+    if (!bullet || !bullet.engineFx) {
+        return;
+    }
+
+    bullet.engineFx.pulseTime += deltaTime * 18;
+    const pulse = 0.92 + Math.sin(bullet.engineFx.pulseTime) * 0.18 + Math.random() * 0.04;
+
+    bullet.engineFx.core.scaling.set(
+        0.94 + pulse * 0.08,
+        0.94 + pulse * 0.08,
+        0.82 + pulse * 0.46
+    );
+    bullet.engineFx.glow.scaling.set(
+        1.04 + pulse * 0.12,
+        1.04 + pulse * 0.12,
+        0.92 + pulse * 0.88
+    );
+
+    if (bullet.engineFx.core.material) {
+        bullet.engineFx.core.material.alpha = 0.72 + pulse * 0.14;
+    }
+
+    if (bullet.engineFx.glow.material) {
+        bullet.engineFx.glow.material.alpha = 0.22 + pulse * 0.16;
+    }
+};
+
+App.disposeProjectile = function (bullet) {
+    if (!bullet) {
+        return;
+    }
+
+    if (bullet.smokeSystem) {
+        bullet.smokeSystem.stop();
+        bullet.smokeSystem = null;
+    }
+
+    if (bullet.mesh && (!bullet.mesh.isDisposed || !bullet.mesh.isDisposed())) {
+        bullet.mesh.dispose();
+    }
+};
+
 App.createBullet = function (position, velocity, color, damage, size, type) {
     const mats = App.getProjectileMaterials();
     const bulletType = type || "player";
     const direction = velocity.clone().normalize();
+    const root = new BABYLON.TransformNode("projectileRoot", App.scene);
 
-    const root = BABYLON.MeshBuilder.CreateBox("bullet", {
-        width: size * 0.34,
-        height: size * 0.34,
-        depth: size * 2.8
-    }, App.scene);
-
-    root.position = position.clone();
-    root.isPickable = false;
-    root.alwaysSelectAsActiveMesh = true;
+    root.position.copyFrom(position);
     App.orientMeshToVelocity(root, direction.clone());
 
     let coreMat = mats.playerCore;
     let glowMat = mats.playerGlow;
     let tipMat = mats.playerTip;
     let trailMat = mats.trailYellow;
+    let trailColor = new BABYLON.Color3(1, 0.85, 0.2);
     let trailLength = 1.9;
     let trailThickness = size * 0.9;
     let trailAlpha = 0.22;
     let trailInterval = 0.012;
     let lifeDistance = 1100;
+    let impactColor = color || new BABYLON.Color3(1, 0.94, 0.25);
+    let impactSize = 0.55;
+    let smokeSystem = null;
+    let engineFx = null;
 
     if (bulletType === "enemy") {
         coreMat = mats.enemyCore;
         glowMat = mats.enemyGlow;
         tipMat = mats.enemyTip;
         trailMat = mats.trailRed;
+        trailColor = new BABYLON.Color3(1, 0.35, 0.2);
         trailLength = 1.35;
         trailThickness = size * 0.82;
         trailAlpha = 0.18;
         trailInterval = 0.018;
         lifeDistance = 950;
+        impactColor = color || new BABYLON.Color3(1, 0.4, 0.18);
+        impactSize = 0.7;
     }
 
     if (bulletType === "rocket") {
-        root.scaling.set(1.15, 1.15, 1.45);
-        coreMat = mats.rocketCore;
-        glowMat = mats.rocketFlame;
-        tipMat = mats.rocketNose;
         trailMat = mats.trailSmoke;
-        trailLength = 2.5;
+        trailColor = new BABYLON.Color3(0.18, 0.18, 0.18);
+        trailLength = 2.6;
         trailThickness = size * 1.05;
         trailAlpha = 0.14;
         trailInterval = 0.026;
         lifeDistance = 980;
-    }
-
-    root.material = coreMat;
-
-    const glow = BABYLON.MeshBuilder.CreateBox("bulletGlow", {
-        width: size * 0.72,
-        height: size * 0.72,
-        depth: size * 4.4
-    }, App.scene);
-    glow.parent = root;
-    glow.position.z = 0;
-    glow.material = glowMat;
-    glow.isPickable = false;
-
-    const tip = BABYLON.MeshBuilder.CreateSphere("bulletTip", {
-        diameter: size * 0.7,
-        segments: 8
-    }, App.scene);
-    tip.parent = root;
-    tip.position.z = size * 1.35;
-    tip.material = tipMat;
-    tip.isPickable = false;
-
-    if (bulletType === "rocket") {
-        const flame = BABYLON.MeshBuilder.CreateBox("rocketFlame", {
-            width: size * 0.52,
-            height: size * 0.52,
-            depth: size * 2.6
+        impactColor = color || new BABYLON.Color3(1, 0.55, 0.18);
+        impactSize = 1.15;
+        engineFx = App.createRocketVisual(root, size, color);
+        smokeSystem = App.createRocketSmokeTrail(root, size, color);
+    } else {
+        const core = BABYLON.MeshBuilder.CreateBox("bulletCore", {
+            width: size * 0.34,
+            height: size * 0.34,
+            depth: size * 2.8
         }, App.scene);
-        flame.parent = root;
-        flame.position.z = -size * 1.8;
-        flame.material = mats.rocketFlame;
-        flame.isPickable = false;
+        core.parent = root;
+        core.material = coreMat;
+        core.isPickable = false;
+
+        const glow = BABYLON.MeshBuilder.CreateBox("bulletGlow", {
+            width: size * 0.72,
+            height: size * 0.72,
+            depth: size * 4.4
+        }, App.scene);
+        glow.parent = root;
+        glow.material = glowMat;
+        glow.isPickable = false;
+
+        const tip = BABYLON.MeshBuilder.CreateSphere("bulletTip", {
+            diameter: size * 0.7,
+            segments: 8
+        }, App.scene);
+        tip.parent = root;
+        tip.position.z = size * 1.35;
+        tip.material = tipMat;
+        tip.isPickable = false;
     }
 
     return {
@@ -237,12 +491,17 @@ App.createBullet = function (position, velocity, color, damage, size, type) {
         damage: damage,
         type: bulletType,
         trailMaterial: trailMat,
+        trailColor: trailColor,
         trailLength: trailLength,
         trailThickness: trailThickness,
         trailAlpha: trailAlpha,
         trailInterval: trailInterval,
         trailTimer: 0,
-        maxDistance: lifeDistance
+        maxDistance: lifeDistance,
+        impactColor: impactColor,
+        impactSize: impactSize,
+        smokeSystem: smokeSystem,
+        engineFx: engineFx
     };
 };
 
@@ -295,12 +554,12 @@ App.shootEnemyBullet = function (enemy) {
     const isRocket = !!enemy.rocket;
     const speed = isRocket ? 1.05 : 1.18;
     const damage = isRocket ? 18 : 8;
-    const size = isRocket ? 0.4 : 0.2;
+    const size = isRocket ? 0.62 : 0.2;
 
     App.createMuzzleFlash(
         start,
         direction,
-        isRocket ? mats.muzzleRed : mats.muzzleRed,
+        mats.muzzleRed,
         isRocket ? 1.0 : 0.68
     );
 
@@ -327,7 +586,7 @@ App.updatePlayerBullets = function (deltaTime) {
         if (bullet.trailTimer <= 0) {
             App.createTrail(
                 bullet.mesh.position,
-                new BABYLON.Color3(1, 0.85, 0.2),
+                bullet.trailColor,
                 bullet.velocity.clone(),
                 bullet.trailLength,
                 bullet.trailThickness,
@@ -342,8 +601,8 @@ App.updatePlayerBullets = function (deltaTime) {
         for (let j = App.enemies.length - 1; j >= 0; j--) {
             if (bullet.mesh.position.subtract(App.enemies[j].mesh.position).length() < 8) {
                 App.enemies[j].health -= bullet.damage;
-                App.createExplosion(bullet.mesh.position, new BABYLON.Color3(1, 0.94, 0.2), 0.55);
-                bullet.mesh.dispose();
+                App.createExplosion(bullet.mesh.position, bullet.impactColor, bullet.impactSize);
+                App.disposeProjectile(bullet);
                 App.playerBullets.splice(i, 1);
                 removed = true;
 
@@ -355,7 +614,7 @@ App.updatePlayerBullets = function (deltaTime) {
         }
 
         if (!removed && bullet.mesh.position.length() > bullet.maxDistance) {
-            bullet.mesh.dispose();
+            App.disposeProjectile(bullet);
             App.playerBullets.splice(i, 1);
         }
     }
@@ -364,16 +623,20 @@ App.updatePlayerBullets = function (deltaTime) {
 App.updateEnemyBullets = function (deltaTime) {
     for (let i = App.enemyBullets.length - 1; i >= 0; i--) {
         const bullet = App.enemyBullets[i];
-        const moveSpeed = bullet.type === "rocket" ? 52 : 52;
+        const moveSpeed = 52;
 
         bullet.mesh.position.addInPlace(bullet.velocity.scale(moveSpeed * deltaTime));
         App.orientMeshToVelocity(bullet.mesh, bullet.velocity.clone());
 
+        if (bullet.type === "rocket") {
+            App.updateRocketVisual(bullet, deltaTime);
+        }
+
         bullet.trailTimer -= deltaTime;
-        if (bullet.trailTimer <= 0) {
+        if (bullet.trailTimer <= 0 && (bullet.type !== "rocket" || !bullet.smokeSystem)) {
             App.createTrail(
                 bullet.mesh.position,
-                bullet.type === "rocket" ? new BABYLON.Color3(0.18, 0.18, 0.18) : new BABYLON.Color3(1, 0.35, 0.2),
+                bullet.trailColor,
                 bullet.velocity.clone(),
                 bullet.trailLength,
                 bullet.trailThickness,
@@ -385,12 +648,8 @@ App.updateEnemyBullets = function (deltaTime) {
 
         if (bullet.mesh.position.subtract(App.player.mesh.position).length() < 1.5) {
             App.damagePlayer(bullet.damage);
-            App.createExplosion(
-                bullet.mesh.position,
-                bullet.type === "rocket" ? new BABYLON.Color3(1, 0.55, 0.18) : new BABYLON.Color3(1, 0.4, 0.18),
-                bullet.type === "rocket" ? 0.95 : 0.7
-            );
-            bullet.mesh.dispose();
+            App.createExplosion(bullet.mesh.position, bullet.impactColor, bullet.impactSize);
+            App.disposeProjectile(bullet);
             App.enemyBullets.splice(i, 1);
             continue;
         }
@@ -401,7 +660,7 @@ App.updateEnemyBullets = function (deltaTime) {
             bullet.mesh.position.y < 0 ||
             bullet.mesh.position.length() > bullet.maxDistance
         ) {
-            bullet.mesh.dispose();
+            App.disposeProjectile(bullet);
             App.enemyBullets.splice(i, 1);
         }
     }

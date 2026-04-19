@@ -1,4 +1,4 @@
-App.buyPower = function (type) {
+﻿App.buyPower = function (type) {
 
     if (type === "shield" && App.money >= 40) {
         App.money -= 40;
@@ -526,8 +526,8 @@ App.updateHud = function () {
 
 App.clearDynamicObjects = function () {
     App.enemies.forEach(enemy => enemy.mesh.dispose());
-    App.playerBullets.forEach(bullet => bullet.mesh.dispose());
-    App.enemyBullets.forEach(bullet => bullet.mesh.dispose());
+    App.playerBullets.forEach(bullet => App.disposeProjectile(bullet));
+    App.enemyBullets.forEach(bullet => App.disposeProjectile(bullet));
     App.allies.forEach(ally => ally.mesh.dispose());
     App.explosions.forEach(explosion => explosion.mesh.dispose());
     App.particles.forEach(particle => particle.mesh.dispose());
