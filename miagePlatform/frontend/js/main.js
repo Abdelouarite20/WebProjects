@@ -161,6 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (gameId === 'ttt' || gameId === '2048') {
                 window.location.href = 'games/DOMProject/index.html';
+            } else if (gameId === 'canvas') {
+                window.location.href = 'games/CanvasProject/index.html';
             }
         });
     });
@@ -173,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (gameFilter === 'all') {
                 // Récupérer les scores de tous les jeux
-                const games = ['2048', 'canvas', 'babylon'];
+                const games = ['2048', 'Crazy Fish', 'babylon'];
                 for (const game of games) {
                     const response = await fetch(`http://localhost:5000/api/scores/leaderboard/${game}`);
                     const data = await response.json();

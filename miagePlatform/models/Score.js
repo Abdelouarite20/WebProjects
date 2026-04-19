@@ -10,7 +10,7 @@ const scoreSchema = new mongoose.Schema({
     game: {
         type: String,
         required: true,
-        enum: ['2048', 'canvas', 'babylon'] // Mes 3 jeux
+        enum: ['2048', 'Crazy Fish', 'babylon'] // Mes 3 jeux
     },
     points: {
         type: Number,

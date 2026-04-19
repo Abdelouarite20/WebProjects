@@ -1,0 +1,121 @@
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #6ea3d8;
+}
+
+#renderCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+}
+
+#hud {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 10;
+    color: #f6f8fb;
+    background: linear-gradient(180deg, rgba(10, 23, 38, 0.82), rgba(8, 14, 24, 0.64));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.24);
+    padding: 14px 16px;
+    border-radius: 12px;
+    line-height: 1.7;
+    min-width: 170px;
+    backdrop-filter: blur(6px);
+}
+
+.hud-title,
+.shop-title {
+    color: #ffffff;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+#shop {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: linear-gradient(180deg, rgba(10, 23, 38, 0.82), rgba(8, 14, 24, 0.64));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.24);
+    padding: 14px;
+    border-radius: 12px;
+    backdrop-filter: blur(6px);
+}
+
+#shop button {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    background: linear-gradient(180deg, #50657d, #334253);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+#shop button:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(180deg, #657a91, #3c4e61);
+}
+
+#help {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    color: #f4f7fb;
+    background: rgba(8, 15, 26, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 10px 14px;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+
+#crosshair {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    transform: translate(-50%, -50%);
+    z-index: 9;
+    pointer-events: none;
+}
+
+.crosshair-line {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+}
+
+.horizontal {
+    top: 13px;
+    left: 4px;
+    width: 20px;
+    height: 2px;
+}
+
+.vertical {
+    top: 4px;
+    left: 13px;
+    width: 2px;
+    height: 20px;
+}
+
+.hidden {
+    display: none !important;
+}
