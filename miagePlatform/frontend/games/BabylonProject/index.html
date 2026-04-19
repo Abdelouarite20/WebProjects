@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- BANNIERE DE PLATEFORME -->
+    <div id="platform-banner" class="hidden">
+        <button id="return-btn" style="pointer-events: auto;">🔙 Retour au Lobby</button>
+        <span id="player-info">Connecté en tant que: <strong id="player-name"></strong></span>
+    </div>
+
     <div id="hud">
         <div class="hud-title">Air Combat</div>
         <div>Health: <span id="healthValue">100</span></div>
@@ -51,5 +57,23 @@
     <script src="js/enemies.js?v=4"></script>
     <script src="js/ui.js?v=6"></script>
     <script src="js/main.js?v=5"></script>
+    <script>
+        // Logique de Base de la bannière (Avant même l'initialisation stricte 3D)
+        const banner = document.getElementById('platform-banner');
+        const playerNameDisplay = document.getElementById('player-name');
+        const returnBtn = document.getElementById('return-btn');
+        const username = localStorage.getItem('username');
+
+        if (username) {
+            banner.classList.remove('hidden');
+            playerNameDisplay.textContent = username;
+        }
+
+        if (returnBtn) {
+            returnBtn.addEventListener('click', () => {
+                window.location.href = '../../index.html';
+            });
+        }
+    </script>
 </body>
 </html>

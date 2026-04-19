@@ -163,6 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = 'games/DOMProject/index.html';
             } else if (gameId === 'canvas') {
                 window.location.href = 'games/CanvasProject/index.html';
+            } else if (gameId === 'babylon') {
+                window.location.href = 'games/BabylonProject/index.html';
             }
         });
     });

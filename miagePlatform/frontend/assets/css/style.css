@@ -39,9 +39,12 @@ body::before {
 }
 
 @keyframes floatingBg {
-    0%, 100% {
+
+    0%,
+    100% {
         filter: brightness(0.95);
     }
+
     50% {
         filter: brightness(1);
     }
@@ -149,9 +152,9 @@ main.active {
 
 input {
     padding: 12px;
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0, 0, 0, 0.4);
     color: #fff;
     font-family: inherit;
     transition: all 0.3s;
@@ -167,7 +170,8 @@ input:focus {
    4. LE LOBBY (Page des jeux)
    ========================================== */
 #lobby-page {
-    padding-top: 80px; /* Espace pour le header fixe */
+    padding-top: 80px;
+    /* Espace pour le header fixe */
     padding-bottom: 0;
     justify-content: flex-start;
 }
@@ -222,7 +226,7 @@ input:focus {
     height: 140px;
     object-fit: contain;
     margin-bottom: 15px;
-    background: rgba(255,255,255,0.05); 
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
 }
 
@@ -253,7 +257,7 @@ button {
     cursor: pointer;
     border: none;
     border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     transition: all 0.2s ease-out;
 }
 
@@ -303,8 +307,17 @@ button:active {
     font-size: 0.8rem;
 }
 
-.pixel-message.success { color: #2ecc71; border-color: #2ecc71; display: block; }
-.pixel-message.error { color: #e74c3c; border-color: #e74c3c; display: block; }
+.pixel-message.success {
+    color: #2ecc71;
+    border-color: #2ecc71;
+    display: block;
+}
+
+.pixel-message.error {
+    color: #e74c3c;
+    border-color: #e74c3c;
+    display: block;
+}
 
 #leaderboard {
     width: 100%;
@@ -320,7 +333,7 @@ button:active {
     text-align: center;
     margin: 40px 0;
     padding: 40px 20px;
-    background: radial-gradient(ellipse at center, rgba(168,85,247,0.15) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
     border-radius: 16px;
     width: 100%;
 }
@@ -337,6 +350,7 @@ button:active {
     max-width: 700px;
     margin: 0 auto;
 }
+
 .text-accent {
     background: linear-gradient(135deg, #a855f7, #22d3ee);
     -webkit-background-clip: text;
@@ -351,7 +365,7 @@ button:active {
     height: 140px;
     object-fit: contain;
     margin-bottom: 15px;
-    background: rgba(255,255,255,0.05); 
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
 }
 
@@ -389,6 +403,7 @@ button:active {
     display: flex;
     justify-content: space-between;
 }
+
 .progress-label .pct {
     color: var(--accent-yellow);
 }
@@ -437,11 +452,12 @@ button:active {
     align-items: center;
     gap: 1rem;
     padding: 15px;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     transition: all 0.3s;
 }
+
 .feature:hover {
     border-color: var(--accent-yellow);
     box-shadow: 0 0 15px rgba(241, 196, 15, 0.2);
@@ -479,8 +495,15 @@ button:active {
 }
 
 @keyframes float-bubble {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-8px); }
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
 }
 
 @media (max-width: 1024px) {

@@ -20,7 +20,7 @@ connectDb();
 // 2. Middlewares - Briques de Sécurité
 
 // Helmet : Bloque les failles XSS basiques et cache la signature Express
-app.use(helmet({ contentSecurityPolicy: false })); // CSP désactivé pour ne pas brider tes jeux HTML5/Canvas
+app.use(helmet({ contentSecurityPolicy: false })); // CSP désactivé pour ne pas brider les jeux 
 
 
 // CORS : On évite open-bar (autorise localhost, ajuste lors de la mise en ligne)
@@ -59,7 +59,7 @@ app.use(express.static(path.join(__dirname, "frontend")));
 app.use('/api/auth', authRoutes);
 app.use('/api/scores', scoreRoutes);
 
-// 5. Route principale : Affiche ton index.html
+// 5. Route principale : Affiche index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, "frontend", "index.html"));
 });
