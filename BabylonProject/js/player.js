@@ -324,6 +324,16 @@ App.createPlayer = function () {
         propellerMaxSpin: 95,
         propellerResponse: 6
     };
+
+    App.player.effectMeshes = App.player.mesh.getChildMeshes(false).filter(mesh => !!mesh.material);
+    App.player.effectMeshes.forEach(mesh => {
+        if (!mesh.material._baseEmissiveColor) {
+            mesh.material._baseEmissiveColor = mesh.material.emissiveColor
+                ? mesh.material.emissiveColor.clone()
+                : BABYLON.Color3.Black();
+        }
+    });
+    App.player.shieldVisualActive = false;
 };
 
 App.getPlayerForward = function () {

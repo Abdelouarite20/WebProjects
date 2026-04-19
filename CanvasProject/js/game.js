@@ -48,6 +48,10 @@ const GameState = {
 };
 
 const HIGH_SCORE_KEY = 'crazyFishHighScores';
+const MAX_BUBBLES = 40;
+const BUBBLE_SPAWN_CHANCE = 0.08;
+const BACKGROUND_WAVE_COUNT = 5;
+const BACKGROUND_WAVE_STEP = 18;
 
 let currentState = GameState.MENU;
 let selectedDifficulty = 'medium';
@@ -77,6 +81,8 @@ let gameOverTimeMs = 0;
 let respawnUntil = 0;
 let respawnStartedAt = 0;
 let menuBackground = null;
+let backgroundGradient = null;
+let waveRows = [];
 
 const getCtx = () => ctx;
 const getCanvas = () => canvas;
@@ -128,7 +134,7 @@ function getFishStyle(size, isPlayer, isSmaller) {
 
 function initGame() {
     canvas = document.getElementById('gameCanvas');
-    ctx = canvas.getContext('2d');
+    ctx = canvas.getContext('2d', { alpha: false, desynchronized: true }) || canvas.getContext('2d');
 
     menuBackground = new Image();
     menuBackground.src = 'assets/images/background_menu fish.png';
@@ -143,6 +149,30 @@ function resizeCanvas() {
     const container = document.querySelector('.game-container');
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
+    rebuildBackgroundCache();
+}
+
+function rebuildBackgroundCache() {
+    if (!ctx || !canvas) return;
+
+    backgroundGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    backgroundGradient.addColorStop(0, CONFIG.colors.water[0]);
+    backgroundGradient.addColorStop(0.5, CONFIG.colors.water[1]);
+    backgroundGradient.addColorStop(1, CONFIG.colors.water[2]);
+
+    waveRows = [];
+    for (let i = 0; i < BACKGROUND_WAVE_COUNT; i++) {
+        const points = [];
+        for (let x = 0; x <= canvas.width + BACKGROUND_WAVE_STEP; x += BACKGROUND_WAVE_STEP) {
+            points.push(x);
+        }
+        waveRows.push({
+            amplitude: 8 + i * 1.5,
+            baseY: i * (canvas.height / BACKGROUND_WAVE_COUNT),
+            points,
+            speedFactor: i + 1
+        });
+    }
 }
 
 function setupEventListeners() {
@@ -332,18 +362,26 @@ function createEnemy(sizeType = 'any') {
 }
 
 function startLoop() {
-    const loop = () => {
+    const loop = (now) => {
         animationId = requestAnimationFrame(loop);
-        tick();
+        tick(now);
     };
-    loop();
+    animationId = requestAnimationFrame(loop);
 }
 
-function tick() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function tick(now = performance.now()) {
+    if (currentState === GameState.MENU) {
+        drawMenu();
+        return;
+    }
 
-    drawBackground();
-    updateBubbles();
+    drawBackground(now);
+
+    if (currentState === GameState.PLAYING) {
+        updateBubbles();
+    } else {
+        drawBubbles();
+    }
 
     if (currentState === GameState.PLAYING) {
         updatePowerUps();
@@ -373,26 +411,28 @@ function tick() {
     }
 }
 
-function drawBackground() {
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, CONFIG.colors.water[0]);
-    gradient.addColorStop(0.5, CONFIG.colors.water[1]);
-    gradient.addColorStop(1, CONFIG.colors.water[2]);
+function drawBackground(now = performance.now()) {
+    if (!backgroundGradient) {
+        rebuildBackgroundCache();
+    }
 
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = backgroundGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
     ctx.lineWidth = 2;
-    for (let i = 0; i < 5; i++) {
+    const time = now * 0.001;
+
+    for (let i = 0; i < waveRows.length; i++) {
+        const row = waveRows[i];
         ctx.beginPath();
-        const y = i * (canvas.height / 5);
-        for (let x = 0; x <= canvas.width; x += 10) {
-            const wave = Math.sin((x + Date.now() * 0.001 * (i + 1)) * 0.01) * 10;
-            if (x === 0) {
-                ctx.moveTo(x, y + wave);
+        for (let j = 0; j < row.points.length; j++) {
+            const x = row.points[j];
+            const wave = Math.sin((x + time * row.speedFactor * 60) * 0.01) * row.amplitude;
+            if (j === 0) {
+                ctx.moveTo(x, row.baseY + wave);
             } else {
-                ctx.lineTo(x, y + wave);
+                ctx.lineTo(x, row.baseY + wave);
             }
         }
         ctx.stroke();
@@ -490,15 +530,22 @@ function updateParticles() {
 }
 
 function updateBubbles() {
-    if (Math.random() < 0.3) {
+    if (bubbles.length < MAX_BUBBLES && Math.random() < BUBBLE_SPAWN_CHANCE) {
         bubbles.push(new Bubble(getCanvas));
     }
 
-    for (let i = bubbles.length - 1; i >= 0; i--) {
-        bubbles[i].update();
-        bubbles[i].draw(ctx, CONFIG.colors.bubble);
+    drawBubbles();
+}
 
-        if (bubbles[i].isDead()) {
+function drawBubbles() {
+    for (let i = bubbles.length - 1; i >= 0; i--) {
+        const bubble = bubbles[i];
+        if (currentState === GameState.PLAYING) {
+            bubble.update();
+        }
+        bubble.draw(ctx, CONFIG.colors.bubble);
+
+        if (bubble.isDead()) {
             bubbles.splice(i, 1);
         }
     }
@@ -651,7 +698,7 @@ function getEnemySize(type) {
 function pickEnemyTypeForBalance() {
     const total = enemies.length;
     const targetSmall = getTargetSmallEnemies(total + 1);
-    const smallCount = enemies.filter(e => e.size < player.size).length;
+    const smallCount = countSmallEnemies();
     if (smallCount < targetSmall) {
         return 'small';
     }
@@ -661,7 +708,7 @@ function pickEnemyTypeForBalance() {
 function ensureSmallEnemyMajority() {
     const total = enemies.length;
     if (total === 0) return;
-    let smallCount = enemies.filter(e => e.size < player.size).length;
+    let smallCount = countSmallEnemies();
     const targetSmall = getTargetSmallEnemies(total);
 
     for (let i = enemies.length - 1; i >= 0 && smallCount < targetSmall; i--) {
@@ -671,6 +718,18 @@ function ensureSmallEnemyMajority() {
             smallCount++;
         }
     }
+}
+
+function countSmallEnemies() {
+    if (!player) return 0;
+
+    let count = 0;
+    for (let i = 0; i < enemies.length; i++) {
+        if (enemies[i].size < player.size) {
+            count++;
+        }
+    }
+    return count;
 }
 
 function updateSpeed() {
@@ -744,6 +803,8 @@ function drawHUD() {
 function drawMenu() {
     resetButtons();
     ctx.save();
+    ctx.fillStyle = '#0b1f33';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (menuBackground && menuBackground.complete && menuBackground.naturalWidth > 0) {
         ctx.drawImage(menuBackground, 0, 0, canvas.width, canvas.height);
     }

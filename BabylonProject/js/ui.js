@@ -31,7 +31,7 @@
         App.createAlly(1);
     }
 
-    App.updateHud();
+    App.updateHud(true);
 };
 
 App.speedIndicatorConfig = App.speedIndicatorConfig || {
@@ -492,6 +492,12 @@ App.buildSpeedIndicator = function () {
             const colors = App.getSpeedZoneColors(zone);
             const angleRad = BABYLON.Tools.ToRadians(angleDeg - 90);
 
+            if (this.lastZone === zone && this.lastAngle !== undefined && Math.abs(this.lastAngle - angleDeg) < 0.35) {
+                return;
+            }
+
+            this.lastAngle = angleDeg;
+            this.lastZone = zone;
 
             this.needle.rotation = angleRad;
             this.needleShadow.rotation = angleRad;
@@ -514,14 +520,56 @@ App.buildSpeedIndicator = function () {
     return App.speedIndicator;
 };
 
-App.updateHud = function () {
-    App.ui.healthValue.textContent = Math.ceil(App.player.health);
-    App.ui.moneyValue.textContent = App.money;
-    App.ui.scoreValue.textContent = App.score;
-    App.ui.timeValue.textContent = Math.floor(App.survivalTime);
-    App.ui.levelValue.textContent = App.difficultyLevel;
+App.updateHud = function (force = false) {
+    if (!App.player) {
+        return;
+    }
 
-    App.buildSpeedIndicator().setSpeed(App.getDisplayedAirspeed());
+    const cache = App.hudCache;
+    const now = performance.now();
+    const nextHealth = Math.ceil(App.player.health);
+    const nextMoney = App.money;
+    const nextScore = App.score;
+    const nextTime = Math.floor(App.survivalTime);
+    const nextLevel = App.difficultyLevel;
+    const nextSpeed = Math.round(App.getDisplayedAirspeed() * 2) / 2;
+    const nextZone = App.getSpeedZone(nextSpeed);
+    const textChanged = force
+        || cache.health !== nextHealth
+        || cache.money !== nextMoney
+        || cache.score !== nextScore
+        || cache.time !== nextTime
+        || cache.level !== nextLevel;
+
+    if (textChanged || now - cache.lastRenderAt >= App.performance.hudRefreshMs) {
+        if (cache.health !== nextHealth) {
+            App.ui.healthValue.textContent = nextHealth;
+            cache.health = nextHealth;
+        }
+        if (cache.money !== nextMoney) {
+            App.ui.moneyValue.textContent = nextMoney;
+            cache.money = nextMoney;
+        }
+        if (cache.score !== nextScore) {
+            App.ui.scoreValue.textContent = nextScore;
+            cache.score = nextScore;
+        }
+        if (cache.time !== nextTime) {
+            App.ui.timeValue.textContent = nextTime;
+            cache.time = nextTime;
+        }
+        if (cache.level !== nextLevel) {
+            App.ui.levelValue.textContent = nextLevel;
+            cache.level = nextLevel;
+        }
+        cache.lastRenderAt = now;
+    }
+
+    if (force || cache.speed !== nextSpeed || cache.speedZone !== nextZone) {
+        App.buildSpeedIndicator().setSpeed(nextSpeed);
+        cache.speed = nextSpeed;
+        cache.speedZone = nextZone;
+    }
 };
 
 App.clearDynamicObjects = function () {
@@ -572,5 +620,5 @@ App.restartGame = function () {
     App.allyDuration = 0;
     App.bombFlash = 0;
     App.startLevel(1);
-    App.updateHud();
+    App.updateHud(true);
 };

@@ -146,6 +146,24 @@ App.makeColoredMaterial = function (name, color) {
     return material;
 };
 
+App.freezeStaticNode = function (node) {
+    if (!node) {
+        return;
+    }
+
+    if (typeof node.freezeWorldMatrix === "function") {
+        node.freezeWorldMatrix();
+    }
+
+    if (node.getChildMeshes) {
+        node.getChildMeshes(false).forEach(mesh => {
+            if (mesh && typeof mesh.freezeWorldMatrix === "function") {
+                mesh.freezeWorldMatrix();
+            }
+        });
+    }
+};
+
 App.createBattlefield = function () {
     const ground = BABYLON.MeshBuilder.CreateGround("ground", {
         width: 3600,
@@ -196,6 +214,7 @@ App.createBattlefield = function () {
     groundMat.useVertexColor = true;
     ground.material = groundMat;
     App.terrain = ground;
+    App.freezeStaticNode(ground);
 
     App.rockMaterial = new BABYLON.StandardMaterial("rockMat", App.scene);
     App.rockMaterial.diffuseTexture = App.createRockTexture();
@@ -277,6 +296,8 @@ App.createMountain = function (radius, angle, layer) {
     if (App.registerCrashCollider) {
         App.registerCrashCollider(mountain, 1.6);
     }
+
+    App.freezeStaticNode(mountain);
 };
 
 App.createMountains = function () {
@@ -372,6 +393,8 @@ App.createTree = function (x, z, scale, styleIndex) {
     if (App.registerCrashCollider) {
         App.registerCrashCollider(root, 0.85);
     }
+
+    App.freezeStaticNode(root);
 };
 
 App.createForests = function () {
@@ -469,6 +492,7 @@ App.createHouse = function (x, z, width, depth, height, roofHeight, wallMat, roo
         App.registerCrashCollider(root, 1.15);
     }
 
+    App.freezeStaticNode(root);
     return root;
 };
 
@@ -485,6 +509,7 @@ App.createRoad = function (from, to, width) {
     road.rotation.y = Math.atan2(dir.x, dir.z);
     road.material = App.roadMat;
     road.receiveShadows = true;
+    App.freezeStaticNode(road);
     return road;
 };
 
@@ -530,11 +555,13 @@ App.createRunway = function () {
     runway.position.y = App.getGroundHeight(0, 0) + 0.16;
     runway.material = App.roadMat;
     runway.receiveShadows = true;
+    App.freezeStaticNode(runway);
 
     const stripeMat = App.makeColoredMaterial("stripeMat", new BABYLON.Color3(0.9, 0.88, 0.74));
     for (let i = 0; i < 7; i++) {
         const stripe = BABYLON.MeshBuilder.CreateGround("stripe_" + i, { width: 4, height: 14 }, App.scene);
         stripe.material = stripeMat;
         stripe.position.set(0, runway.position.y + 0.03, -225 + i * 75);
+        App.freezeStaticNode(stripe);
     }
 };

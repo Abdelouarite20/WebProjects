@@ -1,4 +1,39 @@
-﻿class Fish extends MovingEntity {
+﻿const SIZE_LABEL_CACHE = new Map();
+
+function getSizeLabelSprite(size, color) {
+    const label = Math.floor(size).toString();
+    const fontSize = Math.max(10, Math.floor(size * 0.5));
+    const cacheKey = `${label}:${fontSize}:${color}`;
+
+    if (!SIZE_LABEL_CACHE.has(cacheKey)) {
+        const paddingX = Math.max(4, Math.ceil(fontSize * 0.35));
+        const paddingY = Math.max(3, Math.ceil(fontSize * 0.3));
+        const measureCanvas = document.createElement('canvas');
+        const measureCtx = measureCanvas.getContext('2d');
+        measureCtx.font = `bold ${fontSize}px Arial`;
+
+        const width = Math.ceil(measureCtx.measureText(label).width + paddingX * 2);
+        const height = Math.ceil(fontSize + paddingY * 2);
+        const spriteCanvas = document.createElement('canvas');
+        const spriteCtx = spriteCanvas.getContext('2d');
+        spriteCanvas.width = width;
+        spriteCanvas.height = height;
+
+        spriteCtx.font = `bold ${fontSize}px Arial`;
+        spriteCtx.textAlign = 'center';
+        spriteCtx.textBaseline = 'middle';
+        spriteCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        spriteCtx.fillText(label, width / 2, height / 2 + 1);
+        spriteCtx.fillStyle = color;
+        spriteCtx.fillText(label, width / 2, height / 2 - 1);
+
+        SIZE_LABEL_CACHE.set(cacheKey, spriteCanvas);
+    }
+
+    return SIZE_LABEL_CACHE.get(cacheKey);
+}
+
+class Fish extends MovingEntity {
     constructor(
         x,
         y,
@@ -128,21 +163,17 @@
         ctx.arc(this.size * 0.4, -this.size * 0.2, this.size * 0.08, 0, Math.PI * 2);
         ctx.fill();
 
-        if (true) {
-            const fontSize = Math.max(10, Math.floor(this.size * 0.5));
-            ctx.save();
-            ctx.rotate(-bodyAngle);
-            ctx.scale(facing, 1);
-            ctx.font = `bold ${fontSize}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            const label = Math.floor(this.size);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillText(label, 0, -this.size * 0.95);
-            ctx.fillStyle = this.isPlayer ? '#ffd700' : '#ffffff';
-            ctx.fillText(label, 0, -this.size * 0.98);
-            ctx.restore();
-        }
+        const labelColor = this.isPlayer ? '#ffd700' : '#ffffff';
+        const labelSprite = getSizeLabelSprite(this.size, labelColor);
+        ctx.save();
+        ctx.rotate(-bodyAngle);
+        ctx.scale(facing, 1);
+        ctx.drawImage(
+            labelSprite,
+            -labelSprite.width / 2,
+            -this.size - labelSprite.height
+        );
+        ctx.restore();
 
         ctx.restore();
     }

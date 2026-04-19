@@ -142,6 +142,17 @@ App.getDebrisSourceMaterial = function (sourceNode) {
 };
 
 App.createEffectParticle = function (mesh, options) {
+    if (!mesh) {
+        return false;
+    }
+
+    if (App.particles.length >= App.performance.maxParticles) {
+        if (mesh.dispose) {
+            mesh.dispose();
+        }
+        return false;
+    }
+
     App.particles.push({
         mesh: mesh,
         life: options.life !== undefined ? options.life : 0.25,
@@ -155,6 +166,28 @@ App.createEffectParticle = function (mesh, options) {
         angularVelocity: options.angularVelocity || null,
         damping: options.damping || 0
     });
+    return true;
+};
+
+App.queueExplosionMesh = function (mesh, options) {
+    if (!mesh) {
+        return false;
+    }
+
+    if (App.explosions.length >= App.performance.maxExplosionMeshes) {
+        mesh.dispose();
+        return false;
+    }
+
+    App.explosions.push({
+        mesh: mesh,
+        time: options.time,
+        maxTime: options.maxTime,
+        grow: options.grow,
+        fade: options.fade,
+        spin: options.spin
+    });
+    return true;
 };
 
 App.shakeCamera = function (camera, options) {
@@ -293,9 +326,10 @@ App.createCrashParticleExplosion = function (position, size) {
     const textures = App.getEffectTextures();
     const root = new BABYLON.TransformNode("explosionRoot", scene);
     const scale = size || 1;
+    const density = App.performance.effectDensity || 1;
     root.position.copyFrom(position);
 
-    const flash = new BABYLON.ParticleSystem("explosionFlash", 120, scene);
+    const flash = new BABYLON.ParticleSystem("explosionFlash", Math.max(48, Math.floor(120 * density)), scene);
     flash.particleTexture = textures.flare;
     flash.emitter = root;
     flash.createDirectedSphereEmitter(
@@ -309,7 +343,7 @@ App.createCrashParticleExplosion = function (position, size) {
     flash.maxSize = 2.2 * scale;
     flash.minEmitPower = 8;
     flash.maxEmitPower = 12;
-    flash.emitRate = 6000;
+    flash.emitRate = 6000 * density;
     flash.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
     flash.addColorGradient(0.0, new BABYLON.Color4(1.0, 1.0, 0.95, 1.0));
     flash.addColorGradient(0.35, new BABYLON.Color4(1.0, 0.75, 0.25, 0.9));
@@ -318,7 +352,7 @@ App.createCrashParticleExplosion = function (position, size) {
     flash.start();
     setTimeout(() => flash.stop(), 50);
 
-    const fire = new BABYLON.ParticleSystem("explosionFire", 320, scene);
+    const fire = new BABYLON.ParticleSystem("explosionFire", Math.max(140, Math.floor(320 * density)), scene);
     fire.particleTexture = textures.flare;
     fire.emitter = root;
     fire.createDirectedSphereEmitter(
@@ -332,7 +366,7 @@ App.createCrashParticleExplosion = function (position, size) {
     fire.maxSize = 0.8 * scale;
     fire.minEmitPower = 3;
     fire.maxEmitPower = 7;
-    fire.emitRate = 2200;
+    fire.emitRate = 2200 * density;
     fire.updateSpeed = 0.012;
     fire.gravity = new BABYLON.Vector3(0, 1.1, 0);
     fire.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
@@ -344,7 +378,7 @@ App.createCrashParticleExplosion = function (position, size) {
     fire.start();
     setTimeout(() => fire.stop(), 140);
 
-    const smoke = new BABYLON.ParticleSystem("explosionSmoke", 260, scene);
+    const smoke = new BABYLON.ParticleSystem("explosionSmoke", Math.max(120, Math.floor(260 * density)), scene);
     smoke.particleTexture = textures.smoke;
     smoke.emitter = root;
     smoke.createDirectedSphereEmitter(
@@ -358,7 +392,7 @@ App.createCrashParticleExplosion = function (position, size) {
     smoke.maxSize = 2.2 * scale;
     smoke.minEmitPower = 0.5;
     smoke.maxEmitPower = 2.2;
-    smoke.emitRate = 260;
+    smoke.emitRate = 260 * density;
     smoke.updateSpeed = 0.016;
     smoke.gravity = new BABYLON.Vector3(0, 1.4, 0);
     smoke.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
@@ -379,6 +413,7 @@ App.createCrashParticleExplosion = function (position, size) {
 
 App.createExplosion = function (position, color, size) {
     const mats = App.getEffectMaterials();
+    const density = App.performance.effectDensity || 1;
     const warmColor = BABYLON.Color3.Lerp(color, new BABYLON.Color3(1, 0.9, 0.68), 0.38);
     const fireColor = BABYLON.Color3.Lerp(color, new BABYLON.Color3(1, 0.36, 0.08), 0.22);
     const emberColor = BABYLON.Color3.Lerp(color, new BABYLON.Color3(0.6, 0.14, 0.04), 0.4);
@@ -392,8 +427,7 @@ App.createExplosion = function (position, color, size) {
     hotFlash.material.emissiveColor = warmColor;
     hotFlash.isPickable = false;
 
-    App.explosions.push({
-        mesh: hotFlash,
+    App.queueExplosionMesh(hotFlash, {
         time: 0.16,
         maxTime: 0.16,
         grow: 0.7,
@@ -410,8 +444,7 @@ App.createExplosion = function (position, color, size) {
     core.material.emissiveColor = warmColor.scale(0.95);
     core.isPickable = false;
 
-    App.explosions.push({
-        mesh: core,
+    App.queueExplosionMesh(core, {
         time: 0.28,
         maxTime: 0.28,
         grow: 0.42,
@@ -429,8 +462,7 @@ App.createExplosion = function (position, color, size) {
     outer.material.alpha = 0.48;
     outer.isPickable = false;
 
-    App.explosions.push({
-        mesh: outer,
+    App.queueExplosionMesh(outer, {
         time: 0.42,
         maxTime: 0.42,
         grow: 0.52,
@@ -448,8 +480,7 @@ App.createExplosion = function (position, color, size) {
     fireShell.material.alpha = 0.52;
     fireShell.isPickable = false;
 
-    App.explosions.push({
-        mesh: fireShell,
+    App.queueExplosionMesh(fireShell, {
         time: 0.58,
         maxTime: 0.58,
         grow: 0.5,
@@ -469,8 +500,7 @@ App.createExplosion = function (position, color, size) {
     ring.material.alpha = 0.56;
     ring.isPickable = false;
 
-    App.explosions.push({
-        mesh: ring,
+    App.queueExplosionMesh(ring, {
         time: 0.44,
         maxTime: 0.44,
         grow: 0.54,
@@ -490,8 +520,7 @@ App.createExplosion = function (position, color, size) {
     softRing.material.alpha = 0.34;
     softRing.isPickable = false;
 
-    App.explosions.push({
-        mesh: softRing,
+    App.queueExplosionMesh(softRing, {
         time: 0.7,
         maxTime: 0.7,
         grow: 0.62,
@@ -499,7 +528,7 @@ App.createExplosion = function (position, color, size) {
         spin: 1.4
     });
 
-    const sparkCount = Math.max(8, Math.floor(10 + size * 7));
+    const sparkCount = Math.max(5, Math.floor((10 + size * 7) * density));
     for (let i = 0; i < sparkCount; i++) {
         const spark = BABYLON.MeshBuilder.CreateBox("explosionSpark", {
             width: 0.05 + Math.random() * 0.04,
@@ -530,7 +559,7 @@ App.createExplosion = function (position, color, size) {
         });
     }
 
-    const emberCount = Math.max(4, Math.floor(4 + size * 2.5));
+    const emberCount = Math.max(3, Math.floor((4 + size * 2.5) * density));
     for (let i = 0; i < emberCount; i++) {
         const ember = BABYLON.MeshBuilder.CreateSphere("explosionEmber", {
             diameter: size * (0.06 + Math.random() * 0.05),
@@ -557,7 +586,7 @@ App.createExplosion = function (position, color, size) {
         });
     }
 
-    const smokeCount = Math.max(6, Math.floor(6 + size * 3));
+    const smokeCount = Math.max(4, Math.floor((6 + size * 3) * density));
     for (let i = 0; i < smokeCount; i++) {
         const puff = BABYLON.MeshBuilder.CreateSphere("explosionSmoke", {
             diameter: size * (0.18 + Math.random() * 0.24),
@@ -640,7 +669,9 @@ App.updateParticles = function (deltaTime) {
                 particle.velocity.scaleInPlace(Math.pow(particle.damping, deltaTime * 60));
             }
 
-            particle.mesh.position.addInPlace(particle.velocity.scale(deltaTime));
+            particle.mesh.position.x += particle.velocity.x * deltaTime;
+            particle.mesh.position.y += particle.velocity.y * deltaTime;
+            particle.mesh.position.z += particle.velocity.z * deltaTime;
         }
 
         if (particle.growth) {
@@ -677,32 +708,32 @@ App.updateParticles = function (deltaTime) {
 };
 
 App.updateEffects = function () {
-    const shieldColor = new BABYLON.Color3(0.12, 0.35, 0.7);
+    const shieldActive = App.player.shieldTime > 0;
+    if (App.player.shieldVisualActive !== shieldActive) {
+        const shieldColor = new BABYLON.Color3(0.12, 0.35, 0.7);
 
-    App.player.mesh.getChildMeshes().forEach(mesh => {
-        if (!mesh.material) {
-            return;
-        }
+        App.player.effectMeshes.forEach(mesh => {
+            if (!mesh.material) {
+                return;
+            }
 
-        if (!mesh.material._baseEmissiveColor) {
-            mesh.material._baseEmissiveColor = mesh.material.emissiveColor
-                ? mesh.material.emissiveColor.clone()
-                : BABYLON.Color3.Black();
-        }
+            if (shieldActive) {
+                mesh.material.emissiveColor = BABYLON.Color3.Lerp(
+                    mesh.material._baseEmissiveColor,
+                    shieldColor,
+                    0.72
+                );
+            } else {
+                mesh.material.emissiveColor = mesh.material._baseEmissiveColor.clone();
+            }
+        });
 
-        if (App.player.shieldTime > 0) {
-            mesh.material.emissiveColor = BABYLON.Color3.Lerp(
-                mesh.material._baseEmissiveColor,
-                shieldColor,
-                0.72
-            );
-        } else {
-            mesh.material.emissiveColor = mesh.material._baseEmissiveColor.clone();
-        }
-    });
+        App.player.shieldVisualActive = shieldActive;
+    }
 
     if (App.bombFlash > 0) {
         App.bombFlash -= App.engine.getDeltaTime() / 1000;
+        App.bombFlashActive = true;
 
         const flashRatio = Math.max(App.bombFlash / 0.28, 0);
         App.scene.clearColor = new BABYLON.Color4(
@@ -717,8 +748,9 @@ App.updateEffects = function () {
             0.82 + 0.02 * flashRatio,
             0.93 - 0.22 * flashRatio
         );
-    } else {
+    } else if (App.bombFlashActive) {
         App.scene.clearColor = new BABYLON.Color4(0.64, 0.79, 0.95, 1);
         App.scene.fogColor = new BABYLON.Color3(0.72, 0.82, 0.93);
+        App.bombFlashActive = false;
     }
 };

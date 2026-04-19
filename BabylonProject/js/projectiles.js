@@ -119,23 +119,32 @@ App.orientMeshToVelocity = function (mesh, velocity) {
         return;
     }
 
-    const direction = velocity.normalize();
-    mesh.lookAt(mesh.position.add(direction));
+    const direction = BABYLON.TmpVectors.Vector3[0];
+    const target = BABYLON.TmpVectors.Vector3[1];
+
+    direction.copyFrom(velocity);
+    direction.normalize();
+    target.copyFrom(mesh.position);
+    target.addInPlace(direction);
+    mesh.lookAt(target);
 };
 
 App.createTrail = function (position, color, direction, length, thickness, alpha, materialOverride) {
+    if (App.particles.length >= App.performance.maxTrailParticles) {
+        return;
+    }
+
     const trail = BABYLON.MeshBuilder.CreateBox("trail", {
         width: thickness || 0.12,
         height: thickness || 0.12,
         depth: length || 1.2
     }, App.scene);
 
-    trail.position = position.clone();
+    trail.position.copyFrom(position);
     trail.isPickable = false;
-    trail.alwaysSelectAsActiveMesh = true;
 
     if (direction && direction.lengthSquared() > 0.0001) {
-        App.orientMeshToVelocity(trail, direction.clone());
+        App.orientMeshToVelocity(trail, direction);
     }
 
     if (materialOverride) {
@@ -153,12 +162,16 @@ App.createTrail = function (position, color, direction, length, thickness, alpha
 };
 
 App.createMuzzleFlash = function (position, direction, material, scale) {
+    if (App.particles.length >= App.performance.maxParticles) {
+        return;
+    }
+
     const flash = BABYLON.MeshBuilder.CreateSphere("muzzleFlash", {
         diameter: scale || 0.85,
         segments: 8
     }, App.scene);
 
-    flash.position = position.clone();
+    flash.position.copyFrom(position);
     flash.material = material;
     flash.isPickable = false;
     flash.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
@@ -172,10 +185,15 @@ App.createMuzzleFlash = function (position, direction, material, scale) {
             depth: (scale || 0.85) * 1.6
         }, App.scene);
 
-        streak.position = position.clone().add(direction.normalize().scale((scale || 0.85) * 0.45));
+        const streakOffset = BABYLON.TmpVectors.Vector3[2];
+        streakOffset.copyFrom(direction);
+        streakOffset.normalize();
+        streakOffset.scaleInPlace((scale || 0.85) * 0.45);
+        streak.position.copyFrom(position);
+        streak.position.addInPlace(streakOffset);
         streak.material = material;
         streak.isPickable = false;
-        App.orientMeshToVelocity(streak, direction.clone());
+        App.orientMeshToVelocity(streak, direction);
 
         App.particles.push({ mesh: streak, life: 0.04 });
     }
@@ -191,7 +209,8 @@ App.createRocketSmokeTrail = function (root, size, accentColor) {
         return null;
     }
 
-    const smoke = new BABYLON.ParticleSystem("rocketSmoke" + Math.random(), 140, App.scene);
+    const density = App.performance.effectDensity || 1;
+    const smoke = new BABYLON.ParticleSystem("rocketSmoke" + Math.random(), Math.max(80, Math.floor(140 * density)), App.scene);
     smoke.particleTexture = textures.smoke;
     smoke.emitter = root;
     smoke.minEmitBox = new BABYLON.Vector3(0, 0, -size * 2.55);
@@ -213,7 +232,7 @@ App.createRocketSmokeTrail = function (root, size, accentColor) {
     smoke.maxSize = size * 1.22;
     smoke.minLifeTime = 0.08;
     smoke.maxLifeTime = 0.32;
-    smoke.emitRate = 130;
+    smoke.emitRate = 130 * density;
     smoke.minEmitPower = 0.25;
     smoke.maxEmitPower = 0.95;
     smoke.direction1 = new BABYLON.Vector3(-0.18, -0.18, -2.4);
@@ -368,7 +387,7 @@ App.updateRocketVisual = function (bullet, deltaTime) {
     }
 
     bullet.engineFx.pulseTime += deltaTime * 18;
-    const pulse = 0.92 + Math.sin(bullet.engineFx.pulseTime) * 0.18 + Math.random() * 0.04;
+    const pulse = 0.92 + Math.sin(bullet.engineFx.pulseTime) * 0.2;
 
     bullet.engineFx.core.scaling.set(
         0.94 + pulse * 0.08,
@@ -578,16 +597,19 @@ App.shootEnemyBullet = function (enemy) {
 App.updatePlayerBullets = function (deltaTime) {
     for (let i = App.playerBullets.length - 1; i >= 0; i--) {
         const bullet = App.playerBullets[i];
+        const step = 70 * deltaTime;
 
-        bullet.mesh.position.addInPlace(bullet.velocity.scale(70 * deltaTime));
-        App.orientMeshToVelocity(bullet.mesh, bullet.velocity.clone());
+        bullet.mesh.position.x += bullet.velocity.x * step;
+        bullet.mesh.position.y += bullet.velocity.y * step;
+        bullet.mesh.position.z += bullet.velocity.z * step;
+        App.orientMeshToVelocity(bullet.mesh, bullet.velocity);
 
         bullet.trailTimer -= deltaTime;
         if (bullet.trailTimer <= 0) {
             App.createTrail(
                 bullet.mesh.position,
                 bullet.trailColor,
-                bullet.velocity.clone(),
+                bullet.velocity,
                 bullet.trailLength,
                 bullet.trailThickness,
                 bullet.trailAlpha,
@@ -599,7 +621,11 @@ App.updatePlayerBullets = function (deltaTime) {
         let removed = false;
 
         for (let j = App.enemies.length - 1; j >= 0; j--) {
-            if (bullet.mesh.position.subtract(App.enemies[j].mesh.position).length() < 8) {
+            const enemyPosition = App.enemies[j].mesh.position;
+            const dx = bullet.mesh.position.x - enemyPosition.x;
+            const dy = bullet.mesh.position.y - enemyPosition.y;
+            const dz = bullet.mesh.position.z - enemyPosition.z;
+            if ((dx * dx) + (dy * dy) + (dz * dz) < 64) {
                 App.enemies[j].health -= bullet.damage;
                 App.createExplosion(bullet.mesh.position, bullet.impactColor, bullet.impactSize);
                 App.disposeProjectile(bullet);
@@ -613,7 +639,12 @@ App.updatePlayerBullets = function (deltaTime) {
             }
         }
 
-        if (!removed && bullet.mesh.position.length() > bullet.maxDistance) {
+        const travelDistanceSq =
+            (bullet.mesh.position.x * bullet.mesh.position.x) +
+            (bullet.mesh.position.y * bullet.mesh.position.y) +
+            (bullet.mesh.position.z * bullet.mesh.position.z);
+
+        if (!removed && travelDistanceSq > bullet.maxDistance * bullet.maxDistance) {
             App.disposeProjectile(bullet);
             App.playerBullets.splice(i, 1);
         }
@@ -624,9 +655,12 @@ App.updateEnemyBullets = function (deltaTime) {
     for (let i = App.enemyBullets.length - 1; i >= 0; i--) {
         const bullet = App.enemyBullets[i];
         const moveSpeed = 52;
+        const step = moveSpeed * deltaTime;
 
-        bullet.mesh.position.addInPlace(bullet.velocity.scale(moveSpeed * deltaTime));
-        App.orientMeshToVelocity(bullet.mesh, bullet.velocity.clone());
+        bullet.mesh.position.x += bullet.velocity.x * step;
+        bullet.mesh.position.y += bullet.velocity.y * step;
+        bullet.mesh.position.z += bullet.velocity.z * step;
+        App.orientMeshToVelocity(bullet.mesh, bullet.velocity);
 
         if (bullet.type === "rocket") {
             App.updateRocketVisual(bullet, deltaTime);
@@ -637,7 +671,7 @@ App.updateEnemyBullets = function (deltaTime) {
             App.createTrail(
                 bullet.mesh.position,
                 bullet.trailColor,
-                bullet.velocity.clone(),
+                bullet.velocity,
                 bullet.trailLength,
                 bullet.trailThickness,
                 bullet.trailAlpha,
@@ -646,7 +680,10 @@ App.updateEnemyBullets = function (deltaTime) {
             bullet.trailTimer = bullet.trailInterval;
         }
 
-        if (bullet.mesh.position.subtract(App.player.mesh.position).length() < 1.5) {
+        const dx = bullet.mesh.position.x - App.player.mesh.position.x;
+        const dy = bullet.mesh.position.y - App.player.mesh.position.y;
+        const dz = bullet.mesh.position.z - App.player.mesh.position.z;
+        if ((dx * dx) + (dy * dy) + (dz * dz) < 2.25) {
             App.damagePlayer(bullet.damage);
             App.createExplosion(bullet.mesh.position, bullet.impactColor, bullet.impactSize);
             App.disposeProjectile(bullet);
@@ -658,7 +695,11 @@ App.updateEnemyBullets = function (deltaTime) {
             bullet.mesh.position.z < -60 ||
             Math.abs(bullet.mesh.position.x) > 80 ||
             bullet.mesh.position.y < 0 ||
-            bullet.mesh.position.length() > bullet.maxDistance
+            (
+                (bullet.mesh.position.x * bullet.mesh.position.x) +
+                (bullet.mesh.position.y * bullet.mesh.position.y) +
+                (bullet.mesh.position.z * bullet.mesh.position.z)
+            ) > bullet.maxDistance * bullet.maxDistance
         ) {
             App.disposeProjectile(bullet);
             App.enemyBullets.splice(i, 1);
