@@ -313,3 +313,41 @@ h1 {
 .tile[data-value="512"] { background: #edc850; color: #f9f6f2;}
 .tile[data-value="1024"] { background: #edc53f; color: #f9f6f2;}
 .tile[data-value="2048"] { background: #edc22e; color: #f9f6f2;}
+
+/* Platform Banner */
+.platform-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--panel-bg);
+  padding: 10px 20px;
+  border-radius: var(--border-radius);
+  color: white;
+  margin-bottom: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.platform-banner span {
+  font-weight: bold;
+  color: #00d2ff;
+}
+
+.btn-lobby {
+  background-color: transparent;
+  color: #ff914d;
+  border: 1px solid #ff914d;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.btn-lobby:hover {
+  background-color: #ff914d;
+  color: #fff;
+}

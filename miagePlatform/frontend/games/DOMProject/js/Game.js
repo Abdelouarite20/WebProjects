@@ -104,8 +104,8 @@ export default class Game {
         if (this.scoreSaved) return;
         this.scoreSaved = true;
 
-        const token = localStorage.getItem('token');
-        if (!token) {
+        const username = localStorage.getItem('username');
+        if (!username) {
             console.log("Joueur non connecté, score non sauvegardé.");
             return;
         }
@@ -114,9 +114,9 @@ export default class Game {
             const response = await fetch('http://localhost:5000/api/scores/add', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 },
+                credentials: 'include', // Le navigateur enverra automatiquement le Cookie sécurisé !
                 body: JSON.stringify({
                     game: '2048',
                     points: this.board.score

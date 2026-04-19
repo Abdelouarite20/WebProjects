@@ -36,13 +36,29 @@ exports.login = async (req, res) => {
             expiresIn: '30d'
         });
 
+        // Création du Cookie sécurisé "HttpOnly"
+        res.cookie('token', token, {
+            httpOnly: true, 
+            secure: process.env.NODE_ENV === 'production', 
+            sameSite: 'lax', // Lax est plus tolérant pour les requêtes locales (Fetch) sur localhost
+            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 jours
+        });
+
         res.status(200).json({
             success: true,
             userId: user._id,
-            username: user.username,
-            token
+            username: user.username
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
+};
+
+// @desc    Se déconnecter (Effacer le cookie)
+exports.logout = (req, res) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        sameSite: 'lax'
+    });
+    res.status(200).json({ success: true, message: 'Déconnexion réussie' });
 };

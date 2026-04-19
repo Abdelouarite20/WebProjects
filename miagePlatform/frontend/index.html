@@ -88,7 +88,7 @@
             </div>
             <div class="pixel-game-content">
                 <!-- CARD 1 -->
-            <div class="game-card" data-game="ttt">
+            <div class="game-card" data-game="2048">
                 <div class="pixel-badge">Disponible</div>
                 <img src="assets/images/bg1.png" alt="2048">
                 <h3>JEU : 2048</h3>
@@ -98,8 +98,8 @@
                 </div>
                 <p class="game-desc">Un jeu de puzzle stimulant où vous devez fusionner des tuiles pour atteindre le 2048.</p>
                 <div class="pixel-progress">
-                    <div class="progress-label">DÉVELOPPEMENT <span class="pct">70%</span></div>
-                    <div class="progress-bar"><div class="fill" style="width: 70%; background: #9b59b6;"></div></div>
+                    <div class="progress-label">COMPLÉTÉ <span class="pct">100%</span></div>
+                    <div class="progress-bar"><div class="fill" style="width: 100%; background: #27ae60;"></div></div>
                 </div>
                 <button>JOUER</button>
             </div>
@@ -132,8 +132,8 @@
                 </div>
                 <p class="game-desc">Plongez dans un univers 3D époustouflant propulsé par Babylon.js.</p>
                 <div class="pixel-progress">
-                    <div class="progress-label">DÉVELOPPEMENT <span class="pct">40%</span></div>
-                    <div class="progress-bar"><div class="fill" style="width: 40%; background: var(--danger-red);"></div></div>
+                    <div class="progress-label">DÉVELOPPEMENT <span class="pct">65%</span></div>
+                    <div class="progress-bar"><div class="fill" style="width: 65%; background: var(--accent-yellow);"></div></div>
                 </div>
                 <button>JOUER</button>
             </div>
@@ -141,7 +141,13 @@
         </section>
 
         <section id="leaderboard" class="pixel-container leaderboard-container">
-            <h2>🏆 CLASSEMENT MONDIAL</h2>
+            <h2>🏆 CLASSEMENT GÉNÉRAL</h2>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">TOUS LES JEUX</button>
+                <button class="filter-btn" data-filter="2048">2048</button>
+                <button class="filter-btn" data-filter="canvas">FISH ATTACK</button>
+                <button class="filter-btn" data-filter="babylon">3D ADVENTURE</button>
+            </div>
             <div class="table-responsive">
                 <table class="pixel-table">
                     <thead>
