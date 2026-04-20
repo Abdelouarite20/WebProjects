@@ -151,15 +151,18 @@ Nous avons volontairement choisi une stack simple, moderne et adaptee a un proje
 
 ## Architecture generale
 
-Le coeur du projet se trouve ici :
+Le coeur du projet se trouve ici (arborescence principale) :
 
-
+```text
 WebProjects/
 |-- README.md
+|-- RAPPORT_CONCEPTION.md
 `-- miagePlatform/
-    |-- index.js
-    |-- package.json
     |-- .env
+    |-- .gitignore
+    |-- index.js
+    |-- package-lock.json
+    |-- package.json
     |-- connectDb/
     |   `-- connectDb.js
     |-- controllers/
@@ -168,23 +171,81 @@ WebProjects/
     |-- middleware/
     |   `-- authMiddleware.js
     |-- models/
-    |   |-- User.js
-    |   `-- Score.js
+    |   |-- Score.js
+    |   `-- User.js
     |-- routes/
     |   |-- authRoutes.js
     |   `-- scoreRoutes.js
     `-- frontend/
         |-- index.html
+        |-- assets/
+        |   |-- css/
+        |   |   `-- style.css
+        |   `-- images/
+        |       |-- 2048.png
+        |       |-- background.png
+        |       |-- bg1.png
+        |       |-- bg2.png
+        |       |-- fish-bg.png
+        |       `-- planeAttack.png
         |-- js/
         |   `-- main.js
-        |-- assets/
-        |   `-- css/
-        |       `-- style.css
         `-- games/
-            |-- DOMProject/
+            |-- BabylonProject/
+            |   |-- index.html
+            |   |-- style.css
+            |   |-- docs/
+            |   |   `-- conception.md
+            |   `-- js/
+            |       |-- allies.js
+            |       |-- app.js
+            |       |-- battlefield.js
+            |       |-- effects.js
+            |       |-- enemies.js
+            |       |-- input.js
+            |       |-- main.js
+            |       |-- planes.js
+            |       |-- player.js
+            |       |-- progression.js
+            |       |-- projectiles.js
+            |       |-- scene.js
+            |       |-- sky.js
+            |       `-- ui.js
             |-- CanvasProject/
-            `-- BabylonProject/
+            |   |-- index.html
+            |   |-- assets/
+            |   |   `-- images/
+            |   |       `-- background_menu fish.png
+            |   |-- css/
+            |   |   `-- style.css
+            |   `-- js/
+            |       |-- bubble.js
+            |       |-- entity.js
+            |       |-- fish.js
+            |       |-- game.js
+            |       |-- moving_entity.js
+            |       |-- particle.js
+            |       `-- powerup.js
+            `-- DOMProject/
+                |-- index.html
+                |-- assets/
+                |   `-- images/
+                |       `-- bg2048.png
+                |-- css/
+                |   `-- styles.css
+                `-- js/
+                    |-- Board.js
+                    |-- Game.js
+                    |-- LevelManager.js
+                    |-- NumberTile.js
+                    |-- Tile.js
+                    `-- script.js
 ```
+
+Note :
+
+- le dossier `node_modules/` existe bien apres installation, mais il n'est pas detaille ici car il est genere automatiquement
+- certains fichiers techniques ou de placeholder, comme `.gitkeep`, ne sont pas listes pour garder l'arborescence lisible
 
 ## Organisation backend
 
