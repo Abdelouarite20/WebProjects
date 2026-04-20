@@ -4,19 +4,22 @@ const CONFIG = {
             initialSpeed: 1.5,
             speedIncrease: 0.0003,
             enemyCount: 8,
-            enemySpeedMultiplier: 1
+            enemySpeedMultiplier: 1,
+            maxSpeed: 3.8
         },
         medium: {
             initialSpeed: 2,
             speedIncrease: 0.0005,
             enemyCount: 12,
-            enemySpeedMultiplier: 1.1
+            enemySpeedMultiplier: 1.1,
+            maxSpeed: 5.2
         },
         hard: {
             initialSpeed: 2.5,
             speedIncrease: 0.0007,
             enemyCount: 15,
-            enemySpeedMultiplier: 1.2
+            enemySpeedMultiplier: 1.2,
+            maxSpeed: 6.6
         }
     },
     lives: 3,
@@ -53,6 +56,9 @@ const MAX_BUBBLES = 40;
 const BUBBLE_SPAWN_CHANCE = 0.08;
 const BACKGROUND_WAVE_COUNT = 5;
 const BACKGROUND_WAVE_STEP = 18;
+const FRAME_DURATION_MS = 1000 / 60;
+const MAX_FRAME_DELTA_MS = 50;
+const PLAYER_MAX_SIZE_RATIO = 0.22;
 
 let currentState = GameState.MENU;
 let selectedDifficulty = DEFAULT_DIFFICULTY;
@@ -84,6 +90,7 @@ let respawnStartedAt = 0;
 let menuBackground = null;
 let backgroundGradient = null;
 let waveRows = [];
+let lastFrameTime = 0;
 
 const getCtx = () => ctx;
 const getCanvas = () => canvas;
@@ -135,7 +142,7 @@ function getFishStyle(size, isPlayer, isSmaller) {
 
 function initGame() {
     canvas = document.getElementById('gameCanvas');
-    ctx = canvas.getContext('2d', { alpha: false, desynchronized: true }) || canvas.getContext('2d');
+    ctx = canvas.getContext('2d', { alpha: false }) || canvas.getContext('2d');
 
     menuBackground = new Image();
     menuBackground.src = 'assets/images/background_menu fish.png';
@@ -168,9 +175,51 @@ function setupPlatformBanner() {
 
 function resizeCanvas() {
     const container = document.querySelector('.game-container');
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
+    const width = Math.max(320, container.clientWidth || 0);
+    const height = Math.max(240, container.clientHeight || 0);
+
+    canvas.width = width;
+    canvas.height = height;
+    clampWorldToCanvas();
     rebuildBackgroundCache();
+}
+
+function getMaxPlayerSize() {
+    if (!canvas) return CONFIG.maxEnemySize;
+    return Math.max(CONFIG.playerStartSize, Math.min(canvas.width, canvas.height) * PLAYER_MAX_SIZE_RATIO);
+}
+
+function clampPlayerSize() {
+    if (!player) return;
+    player.size = Math.min(player.size, getMaxPlayerSize());
+}
+
+function hasInvalidNumbers(...values) {
+    return values.some((value) => !Number.isFinite(value));
+}
+
+function clampEntityToCanvas(entity) {
+    if (!entity || !canvas) return;
+
+    if (!Number.isFinite(entity.x)) entity.x = canvas.width / 2;
+    if (!Number.isFinite(entity.y)) entity.y = canvas.height / 2;
+    if (!Number.isFinite(entity.size) || entity.size <= 0) {
+        entity.size = CONFIG.playerStartSize;
+    }
+
+    entity.x = Math.max(entity.size, Math.min(canvas.width - entity.size, entity.x));
+    entity.y = Math.max(entity.size, Math.min(canvas.height - entity.size, entity.y));
+}
+
+function clampWorldToCanvas() {
+    clampPlayerSize();
+    clampEntityToCanvas(player);
+    enemies.forEach(clampEntityToCanvas);
+    powerUps.forEach((item) => {
+        if (!item) return;
+        item.x = Math.max(item.size, Math.min(canvas.width - item.size, item.x));
+        item.y = Math.max(item.size, Math.min(canvas.height - item.size, item.y));
+    });
 }
 
 function rebuildBackgroundCache() {
@@ -319,12 +368,14 @@ function quitRunToMenu() {
 function showMenu() {
     currentState = GameState.MENU;
     selectedDifficulty = DEFAULT_DIFFICULTY;
+    lastFrameTime = 0;
     resetPointerState();
     resetPauseState();
 }
 
 function showHighScores() {
     currentState = GameState.HIGHSCORES;
+    lastFrameTime = 0;
     resetPointerState();
     resetPauseState();
 }
@@ -333,6 +384,7 @@ function startGame() {
     currentState = GameState.PLAYING;
     score = 0;
     startTime = Date.now();
+    lastFrameTime = 0;
     resetPointerState();
     resetPauseState();
 
@@ -426,6 +478,10 @@ function startLoop() {
 }
 
 function tick(now = performance.now()) {
+    const deltaMs = lastFrameTime ? Math.min(now - lastFrameTime, MAX_FRAME_DELTA_MS) : FRAME_DURATION_MS;
+    const deltaScale = deltaMs / FRAME_DURATION_MS;
+    lastFrameTime = now;
+
     if (currentState === GameState.MENU) {
         drawMenu();
         return;
@@ -434,23 +490,23 @@ function tick(now = performance.now()) {
     drawBackground(now);
 
     if (currentState === GameState.PLAYING) {
-        updateBubbles();
+        updateBubbles(deltaScale);
     } else {
         drawBubbles();
     }
 
     if (currentState === GameState.PLAYING) {
-        updatePowerUps();
-        updatePlayer();
+        updatePowerUps(deltaScale);
+        updatePlayer(deltaScale);
         ensureSmallEnemyMajority();
-        updateEnemies();
+        updateEnemies(deltaScale);
         checkCollisions();
         checkPowerUpPickup();
-        updateParticles();
-        updateSpeed();
+        updateParticles(deltaScale);
+        updateSpeed(deltaScale);
         drawHUD();
     } else {
-        drawAmbientParticles();
+        drawAmbientParticles(deltaScale);
         if (currentState === GameState.MENU) {
             drawMenu();
         } else if (currentState === GameState.PAUSED) {
@@ -495,7 +551,7 @@ function drawBackground(now = performance.now()) {
     }
 }
 
-function updatePlayer() {
+function updatePlayer(deltaScale = 1) {
     const speed = isBoostActive() ? 6.5 : 4;
     player.vx = 0;
     player.vy = 0;
@@ -511,23 +567,37 @@ function updatePlayer() {
         player.vy /= diagonal;
     }
 
-    player.update();
+    player.update(deltaScale);
 
-    player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
-    player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+    if (hasInvalidNumbers(player.x, player.y, player.vx, player.vy, player.size)) {
+        player.x = canvas.width / 2;
+        player.y = canvas.height / 2;
+        player.vx = 0;
+        player.vy = 0;
+        player.size = CONFIG.playerStartSize;
+    }
+
+    clampPlayerSize();
+    clampEntityToCanvas(player);
 
     player.draw();
 }
 
-function updateEnemies() {
+function updateEnemies(deltaScale = 1) {
     const diff = CONFIG.difficulty[selectedDifficulty];
 
     for (let i = enemies.length - 1; i >= 0; i--) {
         const enemy = enemies[i];
 
+        if (hasInvalidNumbers(enemy.x, enemy.y, enemy.vx, enemy.vy, enemy.size)) {
+            enemies.splice(i, 1);
+            createEnemy(pickEnemyTypeForBalance());
+            continue;
+        }
+
         enemy.syncSpeed(diff.enemySpeedMultiplier);
 
-        enemy.update();
+        enemy.update(deltaScale);
         enemy.draw();
 
         if (enemy.x < -100 || enemy.x > canvas.width + 100 ||
@@ -550,6 +620,7 @@ function checkCollisions() {
             if (enemy.size <= player.size + sizeEpsilon) {
                 score += Math.floor(enemy.size);
                 player.size += CONFIG.growthRate;
+                clampPlayerSize();
                 createParticles(enemy.x, enemy.y, CONFIG.colors.enemySmaller, 15);
                 enemies.splice(i, 1);
                 createEnemy();
@@ -560,6 +631,7 @@ function checkCollisions() {
                     createEnemy();
                 } else {
                     loseLife();
+                    return;
                 }
             }
         }
@@ -572,9 +644,9 @@ function createParticles(x, y, color, count) {
     }
 }
 
-function updateParticles() {
+function updateParticles(deltaScale = 1) {
     for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update();
+        particles[i].update(deltaScale);
         particles[i].draw(ctx);
 
         if (particles[i].isDead()) {
@@ -583,19 +655,19 @@ function updateParticles() {
     }
 }
 
-function updateBubbles() {
+function updateBubbles(deltaScale = 1) {
     if (bubbles.length < MAX_BUBBLES && Math.random() < BUBBLE_SPAWN_CHANCE) {
         bubbles.push(new Bubble(getCanvas));
     }
 
-    drawBubbles();
+    drawBubbles(deltaScale, true);
 }
 
-function drawBubbles() {
+function drawBubbles(deltaScale = 1, shouldUpdate = false) {
     for (let i = bubbles.length - 1; i >= 0; i--) {
         const bubble = bubbles[i];
-        if (currentState === GameState.PLAYING) {
-            bubble.update();
+        if (shouldUpdate) {
+            bubble.update(deltaScale);
         }
         bubble.draw(ctx, CONFIG.colors.bubble);
 
@@ -637,7 +709,7 @@ function scheduleNextPowerUp() {
     nextPowerUpAt = now + delay;
 }
 
-function updatePowerUps() {
+function updatePowerUps(deltaScale = 1) {
     const now = getGameTime();
     if (now >= nextPowerUpAt && powerUps.length < 2) {
         let type;
@@ -657,7 +729,7 @@ function updatePowerUps() {
 
     for (let i = powerUps.length - 1; i >= 0; i--) {
         const item = powerUps[i];
-        item.update();
+        item.update(deltaScale);
         item.draw(ctx);
         if (item.isExpired()) {
             powerUps.splice(i, 1);
@@ -791,9 +863,9 @@ function countSmallEnemies() {
     return count;
 }
 
-function updateSpeed() {
+function updateSpeed(deltaScale = 1) {
     const diff = CONFIG.difficulty[selectedDifficulty];
-    currentSpeed += diff.speedIncrease;
+    currentSpeed = Math.min(diff.maxSpeed, currentSpeed + diff.speedIncrease * deltaScale);
 }
 
 function loseLife() {
@@ -1068,8 +1140,8 @@ function drawRespawnOverlay() {
     ctx.restore();
 }
 
-function drawAmbientParticles() {
-    updateParticles();
+function drawAmbientParticles(deltaScale = 1) {
+    updateParticles(deltaScale);
 }
 
 function drawButton({ id, x, y, width, height, label, onClick, accent, selected }) {

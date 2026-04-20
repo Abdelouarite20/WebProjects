@@ -1,4 +1,4 @@
-﻿class Bubble extends Entity {
+class Bubble extends Entity {
     constructor(getCanvas) {
         const canvas = getCanvas();
         super(Math.random() * canvas.width, canvas.height + 10, Math.random() * 5 + 2);
@@ -7,10 +7,10 @@
         this.getCanvasFn = getCanvas;
     }
 
-    update() {
-        this.y -= this.speed;
-        this.wobble += 0.05;
-        this.x += Math.sin(this.wobble) * 0.5;
+    update(deltaScale = 1) {
+        this.y -= this.speed * deltaScale;
+        this.wobble += 0.05 * deltaScale;
+        this.x += Math.sin(this.wobble) * 0.5 * deltaScale;
     }
 
     draw(ctx, bubbleColor) {

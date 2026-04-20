@@ -1,4 +1,4 @@
-﻿class PowerUp extends Entity {
+class PowerUp extends Entity {
     constructor(type = 'speed', getCanvas, getGameTime) {
         super(0, 0, 14);
         this.type = type;
@@ -11,8 +11,8 @@
         this._getGameTime = getGameTime;
     }
 
-    update() {
-        this.wobble += 0.08;
+    update(deltaScale = 1) {
+        this.wobble += 0.08 * deltaScale;
     }
 
     draw(ctx) {

@@ -1,4 +1,4 @@
-﻿class Particle extends MovingEntity {
+class Particle extends MovingEntity {
     constructor(x, y, color) {
         super(x, y, Math.random() * 4 + 2);
         this.vx = (Math.random() - 0.5) * 4;
@@ -8,10 +8,10 @@
         this.decay = Math.random() * 0.02 + 0.01;
     }
 
-    update() {
-        super.update();
-        this.life -= this.decay;
-        this.size *= 0.97;
+    update(deltaScale = 1) {
+        super.update(deltaScale);
+        this.life -= this.decay * deltaScale;
+        this.size *= Math.pow(0.97, deltaScale);
     }
 
     draw(ctx) {

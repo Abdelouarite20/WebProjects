@@ -209,12 +209,12 @@ class Fish extends MovingEntity {
         ctx.restore();
     }
 
-    update() {
+    update(deltaScale = 1) {
         if (!this.isPlayer && Math.hypot(this.vx, this.vy) > 0.0001) {
             this.travelAngle = Math.atan2(this.vy, this.vx);
         }
 
-        super.update();
+        super.update(deltaScale);
 
         if (this.vx > 0) this.direction = 1;
         else if (this.vx < 0) this.direction = -1;

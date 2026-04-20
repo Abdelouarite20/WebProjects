@@ -1,13 +1,13 @@
-﻿class MovingEntity extends Entity {
+class MovingEntity extends Entity {
     constructor(x, y, size) {
         super(x, y, size);
         this.vx = 0;
         this.vy = 0;
     }
 
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
+    update(deltaScale = 1) {
+        this.x += this.vx * deltaScale;
+        this.y += this.vy * deltaScale;
     }
 }
 
