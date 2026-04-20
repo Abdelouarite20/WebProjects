@@ -53,6 +53,7 @@ const GameState = {
 const HIGH_SCORE_KEY = 'crazyFishHighScores';
 const DEFAULT_DIFFICULTY = 'medium';
 const MAX_BUBBLES = 40;
+const MAX_PARTICLES = 260;
 const BUBBLE_SPAWN_CHANCE = 0.08;
 const BACKGROUND_WAVE_COUNT = 5;
 const BACKGROUND_WAVE_STEP = 18;
@@ -639,17 +640,35 @@ function checkCollisions() {
 }
 
 function createParticles(x, y, color, count) {
-    for (let i = 0; i < count; i++) {
+    const availableSlots = MAX_PARTICLES - particles.length;
+    if (availableSlots <= 0) return;
+
+    const spawnCount = Math.min(count, availableSlots);
+    for (let i = 0; i < spawnCount; i++) {
         particles.push(new Particle(x, y, color));
     }
 }
 
 function updateParticles(deltaScale = 1) {
     for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update(deltaScale);
-        particles[i].draw(ctx);
+        const particle = particles[i];
+        particle.update(deltaScale);
 
-        if (particles[i].isDead()) {
+        if (hasInvalidNumbers(particle.x, particle.y, particle.vx, particle.vy, particle.size, particle.life)) {
+            particles.splice(i, 1);
+            continue;
+        }
+
+        if (particle.size < 0.2 ||
+            particle.x < -50 || particle.x > canvas.width + 50 ||
+            particle.y < -50 || particle.y > canvas.height + 50) {
+            particles.splice(i, 1);
+            continue;
+        }
+
+        particle.draw(ctx);
+
+        if (particle.isDead()) {
             particles.splice(i, 1);
         }
     }
