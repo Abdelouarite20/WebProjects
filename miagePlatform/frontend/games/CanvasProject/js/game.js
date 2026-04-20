@@ -525,9 +525,7 @@ function updateEnemies() {
     for (let i = enemies.length - 1; i >= 0; i--) {
         const enemy = enemies[i];
 
-        const speedMult = diff.enemySpeedMultiplier;
-        enemy.vx *= speedMult / (speedMult * 0.99 + 0.01);
-        enemy.vy *= speedMult / (speedMult * 0.99 + 0.01);
+        enemy.syncSpeed(diff.enemySpeedMultiplier);
 
         enemy.update();
         enemy.draw();

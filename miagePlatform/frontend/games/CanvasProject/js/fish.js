@@ -1,4 +1,5 @@
-﻿const SIZE_LABEL_CACHE = new Map();
+const SIZE_LABEL_CACHE = new Map();
+const SIZE_LABEL_CACHE_LIMIT = 160;
 
 function getSizeLabelSprite(size, color) {
     const label = Math.floor(size).toString();
@@ -26,6 +27,13 @@ function getSizeLabelSprite(size, color) {
         spriteCtx.fillText(label, width / 2, height / 2 + 1);
         spriteCtx.fillStyle = color;
         spriteCtx.fillText(label, width / 2, height / 2 - 1);
+
+        if (SIZE_LABEL_CACHE.size >= SIZE_LABEL_CACHE_LIMIT) {
+            const oldestKey = SIZE_LABEL_CACHE.keys().next().value;
+            if (oldestKey !== undefined) {
+                SIZE_LABEL_CACHE.delete(oldestKey);
+            }
+        }
 
         SIZE_LABEL_CACHE.set(cacheKey, spriteCanvas);
     }
@@ -58,13 +66,36 @@ class Fish extends MovingEntity {
         this.isShieldActiveFn = isShieldActive;
         this.getCurrentSpeedFn = getCurrentSpeed;
         this.getCtxFn = getCtx;
+        this.speedScale = isPlayer ? 0 : Math.random() + 0.5;
+        this.travelAngle = 0;
 
         if (!isPlayer) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = (Math.random() * 1 + 0.5) * this.getCurrentSpeedFn();
-            this.vx = Math.cos(angle) * speed;
-            this.vy = Math.sin(angle) * speed;
+            this.travelAngle = Math.random() * Math.PI * 2;
+            this.setVelocityForSpeed(this.speedScale * this.getCurrentSpeedFn());
         }
+    }
+
+    setVelocityForSpeed(speed) {
+        this.vx = Math.cos(this.travelAngle) * speed;
+        this.vy = Math.sin(this.travelAngle) * speed;
+    }
+
+    syncSpeed(speedMultiplier = 1) {
+        if (this.isPlayer) return;
+
+        const targetSpeed = this.speedScale * this.getCurrentSpeedFn() * speedMultiplier;
+        const currentSpeed = Math.hypot(this.vx, this.vy);
+
+        if (!Number.isFinite(targetSpeed) || targetSpeed <= 0) return;
+
+        if (currentSpeed < 0.0001) {
+            this.setVelocityForSpeed(targetSpeed);
+            return;
+        }
+
+        const ratio = targetSpeed / currentSpeed;
+        this.vx *= ratio;
+        this.vy *= ratio;
     }
 
     draw() {
@@ -179,6 +210,10 @@ class Fish extends MovingEntity {
     }
 
     update() {
+        if (!this.isPlayer && Math.hypot(this.vx, this.vy) > 0.0001) {
+            this.travelAngle = Math.atan2(this.vy, this.vx);
+        }
+
         super.update();
 
         if (this.vx > 0) this.direction = 1;
@@ -199,6 +234,7 @@ class Fish extends MovingEntity {
             }
             if (bounced) {
                 this.aiState = 'bounce';
+                this.travelAngle = Math.atan2(this.vy, this.vx);
             } else if (this.aiState !== 'swim') {
                 this.aiState = 'swim';
             }
