@@ -483,6 +483,8 @@ function tick(now = performance.now()) {
     const deltaScale = deltaMs / FRAME_DURATION_MS;
     lastFrameTime = now;
 
+    resetCanvasState();
+
     if (currentState === GameState.MENU) {
         drawMenu();
         return;
@@ -647,6 +649,21 @@ function createParticles(x, y, color, count) {
     for (let i = 0; i < spawnCount; i++) {
         particles.push(new Particle(x, y, color));
     }
+}
+
+function resetCanvasState() {
+    if (!ctx) return;
+
+    if (typeof ctx.setTransform === 'function') {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+    ctx.filter = 'none';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
 }
 
 function updateParticles(deltaScale = 1) {
@@ -924,6 +941,7 @@ function drawHUD() {
     const padding = 20;
     const panelHeight = 44;
     ctx.save();
+    resetCanvasState();
     ctx.fillStyle = CONFIG.colors.uiPanel;
     ctx.fillRect(0, 0, canvas.width, panelHeight + padding);
     ctx.fillStyle = CONFIG.colors.uiText;
@@ -953,6 +971,7 @@ function drawHUD() {
 function drawMenu() {
     resetButtons();
     ctx.save();
+    resetCanvasState();
     ctx.fillStyle = '#0b1f33';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     if (menuBackground && menuBackground.complete && menuBackground.naturalWidth > 0) {
@@ -1016,6 +1035,7 @@ function drawMenu() {
 function drawGameOver() {
     resetButtons();
     ctx.save();
+    resetCanvasState();
     ctx.fillStyle = 'rgba(8, 8, 16, 0.75)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1067,6 +1087,7 @@ function drawGameOver() {
 function drawHighScores() {
     resetButtons();
     ctx.save();
+    resetCanvasState();
     ctx.fillStyle = 'rgba(3, 18, 38, 0.75)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1113,6 +1134,7 @@ function drawHighScores() {
 function drawPauseOverlay() {
     resetButtons();
     ctx.save();
+    resetCanvasState();
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = CONFIG.colors.uiText;
@@ -1146,6 +1168,7 @@ function drawRespawnOverlay() {
     const remaining = Math.max(0, respawnUntil - Date.now());
     const count = Math.max(1, Math.ceil(remaining / 1000));
     ctx.save();
+    resetCanvasState();
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = CONFIG.colors.uiText;
@@ -1166,6 +1189,7 @@ function drawAmbientParticles(deltaScale = 1) {
 function drawButton({ id, x, y, width, height, label, onClick, accent, selected }) {
     const isHover = mouse.x >= x && mouse.x <= x + width && mouse.y >= y && mouse.y <= y + height;
     ctx.save();
+    resetCanvasState();
     ctx.fillStyle = selected ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.12)';
     ctx.strokeStyle = accent || 'rgba(255, 255, 255, 0.4)';
     ctx.lineWidth = selected ? 3 : 2;
